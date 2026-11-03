@@ -87,6 +87,30 @@ try {
   await expect(
     page.getByRole("button", { name: "Submit assessment" }),
   ).toBeDisabled();
+  await page.goto(base + "#/learn/observations");
+  const activity = page.getByRole("region", {name:"Lesson activity"});
+  await activity.getByLabel("Activity parameter",{exact:true}).fill("8");
+  await activity.getByLabel("Activity prediction").selectOption("increase");
+  await activity.getByRole("button",{name:"Run lesson experiment"}).click();
+  await expect(activity.getByText(/Computed result:/)).toContainText("24.00");
+  await activity.getByRole("button",{name:"No",exact:true}).click();
+  await activity.getByLabel("Applied result").fill("24");
+  await activity.getByLabel("Activity explanation").fill("Eight observations with three fields produce twenty-four cells; rows are not variables.");
+  await activity.getByRole("button",{name:"Check and record activity"}).click();
+  await expect(activity.getByText(/Activity checks passed/)).toBeVisible();
+  await activity.getByRole("button",{name:"Save activity",exact:true}).click();
+  await expect(activity.getByText(/Save activity: Saved on this device/)).toBeVisible();
+  await page.reload();
+  await expect(activity.getByText(/1 successful practice checks/)).toBeVisible();
+  await page.goto(base + "#/quiz");
+  const chapter = page.getByRole("region",{name:"Chapter quiz"});
+  await chapter.getByLabel("Chapter numeric answer").fill("15");
+  await chapter.getByRole("button",{name:"Check practice answer"}).click();
+  await expect(chapter.getByText(/Correct · Local practice/)).toBeVisible();
+  await chapter.getByRole("button",{name:"Save chapter quiz",exact:true}).click();
+  await expect(chapter.getByText(/Save chapter quiz: Saved on this device/)).toBeVisible();
+  await page.reload();
+  await expect(chapter.getByText(/Correct · Local practice/)).toBeVisible();
   assert.deepEqual(errors, []);
   console.log(
     JSON.stringify(
@@ -96,6 +120,8 @@ try {
         python: "real execution and two checks passed",
         experiment: "transformed and restored",
         quiz: "guest answers restored; cloud grading unavailable",
+        lesson: "computed result, checks and saved evidence restored",
+        chapterPractice: "honest local grading and history restored",
         browserErrors: errors.length,
       },
       null,

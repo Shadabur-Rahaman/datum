@@ -35,3 +35,10 @@ Coverage added: password signup/login/reset/update API contracts and errors; per
 BLOCKED rather than passed: hosted email/Auth flows, cross-device account synchronization, hosted RLS integration and real Gemini/Groq responses. Browser tests intentionally run guest-only configuration. The optional real Supabase suite requires external project variables.
 
 Intermediate failures repaired: JSX closing brace in lesson activity; unsupported Testing Library test option caused TypeScript to stop browser startup; rejection fixture expected permission-denied instead of invalid-input. No application failure was hidden by removing a test. A mobile screenshot review also found the pre-existing dashboard button/progress overlap; the footer now stays in normal layout flow.
+
+
+## Published verification — 4 November 2026 (Asia/Calcutta)
+
+VERIFIED: GitHub workflow 41708702926 completed successfully for aeb7b6308101adb4ad04a0f4dc366b47db525567. The live build identity matched exactly. `EXPECTED_COMMIT=aeb7b6308101adb4ad04a0f4dc366b47db525567 node scripts/smoke-live.mjs` passed nine routes, actual Python and two checks, transformed lab restoration, original quiz draft restoration, new lesson computation/check/save restoration, and public chapter practice grading/history restoration, with zero browser errors. The environment-variable spelling here is conceptual shell syntax; use `$env:EXPECTED_COMMIT` in PowerShell.
+
+The final mobile layout fix passed a focused 60-test desktop/mobile shell and V2.2 lesson rerun. CI subsequently ran the full release suite successfully. External hosted checks remain BLOCKED, not skipped-and-counted-as-passing.
