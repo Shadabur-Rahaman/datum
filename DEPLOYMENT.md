@@ -1,12 +1,22 @@
-# Deployment
+# GitHub Pages deployment
 
-GitHub Pages is configured for `Shadabur-Rahaman/datum`. The workflow tests and builds with `npm run build:pages`, uploads dist, and deploys to https://shadabur-rahaman.github.io/datum/. Pages mode uses HashRouter and base `/datum/`; local and ordinary builds retain BrowserRouter. No secrets are required. Check the Actions deployment result for publication status. Cloudflare remains an alternative below.
+Repository: https://github.com/Shadabur-Rahaman/datum
 
-For Cloudflare Pages: use Node 24, `npm ci` to install, `npm run build` as build command and `dist` as output directory. `public/_redirects` provides SPA route fallback for deep links. No frontend variables are required in this phase.
+Site: https://shadabur-rahaman.github.io/datum/
 
-Phase 2 setup: create a Supabase project, apply reviewed migrations and idempotent seeds using Supabase CLI, run RLS tests against two users, configure email auth and exact local/production redirect URLs, then set public URL and publishable key as documented in .env.example. Do not use service-role credentials in the client. Actual migration commands await migration files in Phase 2.
+Preserved: Vite base `/datum/`, HashRouter for Pages builds, BrowserRouter for ordinary/local builds. Example: `/datum/#/learn/observations`. OTP code entry avoids auth-token hash collisions.
 
-Phase 6: deploy authenticated Edge Functions, set provider keys/models through Supabase secrets, verify JWT/ownership enforcement and provider failure behavior. Consult current official SDK/API docs at implementation time.
+`.github/workflows/pages.yml` now gates deployment on unit tests, isolated PostgreSQL ownership tests and production-mode Playwright desktop/mobile/accessibility checks. It installs Chromium and OS dependencies, then builds again with public deployment configuration and uploads dist. Main pushes deploy through official Pages actions. No provider or service-role secret enters this workflow.
 
-Before deployment: connect authorized GitHub repository; pass build, unit and browser checks; review exposed bundle for credentials; verify environment and security headers appropriate to required worker/CDN resources; verify deep links, keyboard access, mobile layout and theme. Later add cross-user isolation, real code execution timeout, private quiz grading, AI outage fallback, export/deletion and guest migration smoke tests. A free-tier limit must produce an honest recoverable state. Do not claim a live app without a verified URL.
+## Enable cloud accounts
 
+Complete DATABASE.md first. In GitHub Settings → Secrets and variables → Actions → Variables, set:
+
+- VITE_SUPABASE_URL: actual Project URL.
+- VITE_SUPABASE_PUBLISHABLE_KEY: actual publishable key, never a secret/service-role key.
+
+Rerun the Pages workflow after changes. Values are embedded at build time. With both absent the published app remains honestly guest-only. Browser CI uses an unconfigured guest build; run the real Supabase test suite and email acceptance checklist before enabling cloud accounts. No remote migration is automatically performed during deployment.
+
+Build: `npm run build:pages`; output: dist; Node 24. Local production preview: `npm run preview -- --base=/datum/`. The ordinary Cloudflare-compatible build remains `npm run build`, with public/_redirects retained; hosting has not changed.
+
+After publication verify actual workflow success, HTTP 200, dashboard and nested-route refresh, guest save recovery, and Settings configuration state. With cloud enabled also verify actual OTP email, cross-device recovery and two-user isolation. A queued workflow is not a successful deployment.

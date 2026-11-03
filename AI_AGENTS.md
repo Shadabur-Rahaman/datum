@@ -1,6 +1,6 @@
-# AI gateway contract — Phase 6 plan
+# AI gateway contract — V2 Milestone 2.4 (not implemented)
 
-No provider is connected in Phase 1. Every visible hint is authored and explicitly labeled. No model output, execution or numerical result is fabricated.
+No provider is connected in Milestone 2.1. Auth and persistence do not enable any AI provider. Every visible hint is authored and explicitly labeled. No model output, execution or numerical result is fabricated.
 
 One Supabase Edge Function will authenticate the JWT, verify resource ownership, validate bounded input with Zod and choose a single role. A provider interface will support Gemini first and optional Groq fallback, with environment-configured model IDs. Browser requests contain context IDs, role, bounded user text and requested hint level. Server reads owned context and supplies deterministic computed facts.
 

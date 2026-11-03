@@ -1,4 +1,10 @@
-# Architecture — version 1
+# Architecture — V2 / Milestone 2.1
+
+Current extension: `features/auth` owns session lifecycle and email OTP UI; `features/persistence` separates Zod schemas, guest storage, cloud repository, draft hook and save status. Settings and Lesson are extracted from monolithic routes. Auth session changes remount routed state; stale async loads are ignored and server owner guards reject cross-account stale saves.
+
+Guest saves are explicit, validated and device-only. Cloud saves use revision-checked bounded RPCs, with idempotent retries and no browser authority over grading. Profile/content/draft/progress/session/attempt migrations and SQL ownership tests are shipped. Dashboard statistics stay illustrative until Milestone 2.5. No hosted Supabase environment has been verified yet.
+
+CI now runs production Pages-mode E2E and real isolated PostgreSQL tests before publication. GitHub Pages `/datum/` hash routing is preserved; ordinary Vite builds still use BrowserRouter. Original Phase 1 decisions below are retained as historical context.
 
 ## Phase 0 inspection
 

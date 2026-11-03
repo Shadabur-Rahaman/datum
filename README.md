@@ -1,6 +1,6 @@
-# DATUM — Phase 0 + Phase 1
+# DATUM — V2 Milestone 2.1
 
-An original data science learning workspace built around investigation and evidence. This delivery is the application foundation, not the completed learning engine.
+An original data science learning workspace built around investigation and evidence. This delivery adds saved-work foundations to the existing preview. It is not the complete V2 learning engine.
 
 ## Hosted preview
 
@@ -19,22 +19,21 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Open the URL printed by Vite. Production output is `dist/`. No environment variables or paid services are needed for Phase 1.
+Open the URL printed by Vite. Production output is `dist/`. No environment variables are needed for guest mode. Cloud accounts require the real Supabase configuration and migrations in DATABASE.md.
 
 ## What works
 
-- Responsive navigation, all eight main destinations, not-found states, error boundary and keyboard skip link.
-- Dark/light appearance stored locally, including a truthful storage failure message.
-- Dashboard with explicitly illustrative progress, skills and activity.
-- Searchable six-chapter track and twelve structured lesson previews with temporary reflections and authored thinking guides.
-- Three-panel investigation layout, mobile panel switching, searchable six-row fixture, CSV download, accessible sample chart, editable/resettable Python draft, and authored offline hint.
-- Settings and explicit upcoming states for unimplemented integrations.
+- Preserved responsive dark/light research workspace, navigation, lesson previews and authored guidance.
+- Explicit guest saves for lesson reflections and mission hypothesis/code/filter/view, with refresh recovery and stale-write detection.
+- Supabase email OTP, profile, account draft restoration, explicit guest import and export code, ready for project configuration.
+- SQL migrations with owner-only RLS, server-controlled attempts, revision-checked writes and idempotent imports.
+- Fixed title, concept-aware curriculum search and linked table/chart/CSV filters.
+- Deployment gated on unit, production browser and real PostgreSQL tests.
 
-## Scope and limitations
+## Verification boundary
 
-Only appearance is persisted. Drafts disappear on navigation or refresh. No login, database, verified progress, real Python execution, graded quizzes, AI provider or notebook storage exists yet. Lesson previews are not twelve completed interactive lessons. The six-row layout fixture is not the Phase 3 Living Dataset Engine. Sample dashboard metrics are not learner achievements. GitHub Pages deployment is configured through `.github/workflows/pages.yml`.
+Guest behavior and local SQL ownership rules are tested. Hosted Supabase Auth, email delivery and cloud recovery are not yet verified because no project configuration was supplied. Settings honestly shows guest-only mode in that case. Dashboard metrics remain labeled examples, not learner achievements. Python, grading, AI, notebook/mastery and a living dataset remain later milestones.
 
-The next authorized phase would be Phase 2: Supabase schema, authentication, RLS and persistence. Stop here until instructed to continue.
+See [V2_AUDIT.md](V2_AUDIT.md), [V2_PLAN.md](V2_PLAN.md), [V2_CHANGELOG.md](V2_CHANGELOG.md), [DATABASE.md](DATABASE.md), [TESTING.md](TESTING.md) and [DEPLOYMENT.md](DEPLOYMENT.md). Original PHASE_REPORT.md is a historical Phase 1 report.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md), [PRODUCT_SPEC.md](PRODUCT_SPEC.md), [TESTING.md](TESTING.md), and [PHASE_REPORT.md](PHASE_REPORT.md).
-
+Stop at Milestone 2.1. Next is Milestone 2.2 only after instruction.

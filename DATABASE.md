@@ -1,11 +1,52 @@
-# Database plan — not implemented in Phase 1
+# Database — Milestone 2.1
 
-Phase 2 will introduce Supabase PostgreSQL, Auth and Storage. No migrations, accounts or connected database are claimed in this delivery.
+Implemented migration: `supabase/migrations/202611030001_foundation.sql`. Idempotent catalog: `supabase/seed.sql`. No hosted project has been configured or migrated by this task.
 
-Content hierarchy: learning_tracks → chapters → lessons; skills and lesson_skill_links map learning objectives. Datasets include version/seed/generation metadata. Missions and mission_steps reference datasets. Practice_exercises and quizzes reference versioned content. Quiz_questions and quiz_options expose prompts/options only; solutions and trusted fixtures live in a private schema.
+| Entity | Purpose / authority |
+| --- | --- |
+| profiles | Auth trigger creates one record per user; owner can read and update display_name only. |
+| content_items | Versioned, published lesson/mission references; published-only public reads, no browser writes. |
+| user_drafts | Owned reflection or mission hypothesis/code/filter/view, with server revision and timestamps. |
+| user_lesson_progress | Explicit draft_saved/reflection_saved, never verified completion or mastery. |
+| user_mission_runs | Resumable session; saving remains BRIEF. Guarded mission progression belongs to 2.2+. |
+| quiz_attempts / practice_attempts | Future server-written attempts. Owner reads only; no browser inserts/updates/deletes or verified_score changes. No grader exists yet. |
+| private.assessment_keys | Empty until 2.3; no anon/authenticated schema/table privileges. |
 
-Owned records: profiles, user_mission_runs, experiments, practice_attempts, quiz_attempts, quiz_responses, user_lesson_progress, skill_evidence, user_skill_mastery, evidence_entries, ai_interactions and ai_usage_limits. Each owned record must carry a non-null user_id linked to auth.users; related parent ownership must be enforced, not merely a user_id on the child.
+All exposed tables have RLS. UUID owners reference auth.users with cascading deletion. Content references include versions and type integrity. Attempt parent references include owner so records cannot attach to another user's run. Owner/update-time indexes support reads. Private keys are outside public API access.
 
-Use UUID identities where appropriate, foreign keys, uniqueness for user/content versions and attempt idempotency, timestamps, indexes on owner + updated_at and parent foreign keys. Immutable published versions preserve historical evidence meaning. Separate learner-writable draft fields from server-owned grades. RLS on every exposed table; published-only content read policies; owner-only draft policies; no learner writes to scores, mastery or published content. Administrative writes require server authorization. Private storage buckets use owner-qualified paths and ownership policies.
+## Write contracts
 
-Phase 2 tests must cover anonymous published reads, unpublished denial, owner CRUD, cross-user denial, forged owner IDs, child-parent ownership mismatch, protected grading updates, retries and deletion cascades. Account deletion must delete Auth identity and associated private storage through an authenticated server workflow. Migrations and idempotent seeds will be delivered and verified in Phase 2, not represented by placeholder SQL now.
+`save_draft(p_content_id,p_version,p_body,p_expected_revision,p_owner)` is a bounded SECURITY DEFINER function with an empty search_path. auth.uid() is the authority; p_owner is only an account-switch guard and must match it. Validate allowed JSON keys/types/lengths and published content. A per-owner/content transaction lock protects inserts and updates. Identical retries return the existing row; stale changed writes return SQLSTATE 40001. Clients cannot set identity, revision, timestamps, completion or grades.
+
+`import_guest_drafts(p_drafts,p_owner)` accepts at most 30 records / 300 KB atomically. Existing conflicting cloud drafts are kept; repeated imports are safe. The UI retains the local backup. Invalid records roll back the batch. `export_my_data()` returns all owned profile/draft/progress/session/attempt records in a versioned JSON envelope. For future large histories use a streaming export job.
+
+## Exact setup
+
+1. Create a Supabase project you control. From this checkout:
+
+```sh
+npx supabase login
+npx supabase link --project-ref YOUR_ACTUAL_PROJECT_REF
+npx supabase db push --include-seed
+```
+
+Use your real project reference; the text above is a placeholder, not invented configuration. Review the linked target before pushing. The migration runs once; seed is repeatable. Optional full local Supabase requires Docker: `npx supabase start`, then `npx supabase db reset` only against that disposable local stack. The standalone SQL suite does not need Docker.
+
+2. Enable Email Auth and signup. Set Site URL to `https://shadabur-rahaman.github.io/datum/`; allow exact local URLs if needed. The UI uses code entry rather than redirect links to preserve hash routing.
+3. Change the Magic Link/OTP template to `supabase/templates/otp.html`, including `{{ .Token }}`. If signup settings use a separate confirmation template, include the code there too. Link-only emails are not this UI's implemented flow. Configure SMTP or authorized test addresses; free-tier delivery limits/restrictions may apply. Errors are shown, not replaced with fake success.
+4. Copy `.env.example` to `.env.local`. Set the actual Project URL and **publishable** key; restart Vite. For Pages set the same public GitHub repository variables and redeploy, per DEPLOYMENT.md. Never put a secret/service-role key into Vite variables.
+5. Run the configured integration suite and manual email/two-user acceptance checks before treating cloud accounts as verified.
+
+## Verification boundaries
+
+`npm run test:db` creates a new isolated real PostgreSQL cluster on a free loopback port, applies the actual migration and seed twice, creates two independent auth.users records and role-switched sessions, and verifies grants/RLS/RPCs. It never connects to or resets an existing database. Set PG_BIN to PostgreSQL's bin directory if autodetection fails. Its minimal auth.uid claim fixture does NOT test GoTrue, JWT signatures, PostgREST or email delivery.
+
+`npm run test:supabase` requires SUPABASE_TEST_URL, SUPABASE_TEST_PUBLISHABLE_KEY and SUPABASE_TEST_SERVICE_ROLE_KEY in the shell, for a disposable migrated TEST project only. It creates two unique users, generates OTPs through the admin API, verifies them through real Supabase Auth, tests PostgREST persistence/session restoration/ownership/import/export and deletes only its created users in finally. It never prints tokens or keys. Missing configuration exits 2, not a pass. Real email delivery still requires manual checking because this suite obtains codes via the admin API.
+
+## Export, deletion and retention design
+
+Settings exports guest JSON and signed-in owner-scoped cloud JSON. Clear guest drafts affects only DATUM guest keys. Cloud records are not copied to guest storage at sign-out. Browser storage is device-specific and readable by same-origin code; avoid sensitive data. Auth sessions are persisted by the Supabase SDK.
+
+Self-service deletion is not enabled or represented by a pretend button. Operator procedure: require a fresh authenticated request, verify the immutable Auth UUID, offer export, confirm permanent deletion, then use Auth Admin deleteUser from a trusted server/admin environment for that UUID. Never trust an arbitrary unauthenticated UUID/email. Verify cascades and revoke sessions; do not log tokens or exported content. All owned rows cascade; there is no Storage bucket in 2.1. Future Storage objects must be removed before Auth deletion. Backups retain deleted data until the operator's configured expiry, which must be disclosed; no fixed retention period is claimed. Future self-service requires a recently reauthenticated, owner-checked, idempotent Edge Function.
+
+Official references: [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [OTP](https://supabase.com/docs/guides/auth/auth-email-passwordless), [templates](https://supabase.com/docs/guides/auth/auth-email-templates), [testing](https://supabase.com/docs/guides/local-development/testing/overview).

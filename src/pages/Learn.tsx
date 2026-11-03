@@ -1,8 +1,79 @@
-import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, BookOpen, Clock3, Search } from 'lucide-react';
-import { track, lessons } from '../content/track';
-import { Badge, PageHeading } from '../components/ui/shared';
-import { Button } from '../components/ui/button';
-export function Learn() { const [query,setQuery]=useState(''); const filtered=track.chapters.filter(c=>`${c.title} ${c.lessons.map(l=>l.title).join(' ')}`.toLowerCase().includes(query.toLowerCase())); return <><PageHeading eyebrow="LEARN / YOUR FIRST TRACK" title="Become a Data Detective." description="Six chapters. Twelve questions worth asking. One new way of thinking."/><section className="track-banner panel"><span className="icon-tile"><BookOpen size={30}/></span><div><h2>Start with a question. Finish with evidence.</h2><p className="muted">Beginner friendly · 12 lesson previews · Full interactive assessments arrive in later phases.</p></div><Badge tone="teal">CONTENT V1</Badge></section><label className="search-field"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Find a chapter or lesson…" aria-label="Find a chapter or lesson"/></label><div className="chapter-grid">{filtered.map(c=><section className="panel chapter" key={c.id}><div className="section-top"><span className="chapter-number">0{c.id}</span><Badge>2 LESSON PREVIEWS</Badge></div><h2>{c.title}</h2><p className="muted">{c.description}</p><div className="lesson-links">{c.lessons.map(l=><Link key={l.id} to={`/learn/${l.id}`}><span><BookOpen size={16}/>{l.title}</span><span>{l.minutes}m <ArrowRight size={15}/></span></Link>)}</div></section>)}</div>{!filtered.length&&<section className="panel empty-state"><h2>No matching lessons</h2><p>Try a topic such as Python, data or statistics.</p><Button variant="outline" onClick={()=>setQuery('')}>Clear search</Button></section>}</>; }
-export function Lesson() { const {lessonId}=useParams(); const lesson=lessons.find(l=>l.id===lessonId); const [draft,setDraft]=useState(''); const [show,setShow]=useState(false); if(!lesson) return <section className="panel empty-state"><h1>Lesson not found</h1><p>This lesson may have moved. Choose a lesson from the track.</p><Button asChild><Link to="/learn">Back to the track</Link></Button></section>; const next=lessons[lessons.indexOf(lesson)+1]; return <><Link className="text-link" to="/learn"><ArrowLeft size={15}/>Data Detective track</Link><PageHeading eyebrow={`CHAPTER 0${lesson.chapter} / LESSON PREVIEW`} title={lesson.title} description={lesson.chapterTitle}><Badge><Clock3 size={13}/>{lesson.minutes} MIN</Badge></PageHeading><div className="lesson-layout"><article className="panel lesson-body"><Badge tone="teal">01 / INVESTIGATE</Badge><h2>{lesson.question}</h2><p className="large-copy">{lesson.concept}</p><hr/><p className="eyebrow">02 / MAKE A PREDICTION</p><label htmlFor="reflection">{lesson.prompt}</label><textarea id="reflection" maxLength={2000} value={draft} onChange={e=>setDraft(e.target.value)} placeholder="I think… because…"/><p className="small muted">{draft.length}/2000 · Temporary reflection; not saved or graded in Phase 1.</p><Button variant="outline" onClick={()=>setShow(!show)} aria-expanded={show}>{show?'Hide thinking guide':'Show thinking guide'}</Button>{show&&<div className="insight"><p>Make your claim specific. Name the evidence you would need, identify a possible alternative explanation, and state what would change your mind. This is an authored reflection guide, not AI feedback.</p></div>}<div className="lesson-next">{next?<Button asChild><Link to={`/learn/${next.id}`}>Next lesson preview <ArrowRight size={16}/></Link></Button>:<Button asChild><Link to="/investigate">Explore the mission <ArrowRight size={16}/></Link></Button>}</div></article><aside className="panel lesson-aside"><p className="eyebrow">THE INVESTIGATION LOOP</p>{['Investigate','Predict','Experiment','Observe','Explain','Validate','Adapt'].map((s,i)=><div className="loop-step" key={s}><span>0{i+1}</span>{s}</div>)}<p className="small muted">Full lesson interactions and completion checks will be introduced with the learning engines. Reading a page does not count as mastery.</p></aside></div></>; }
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, BookOpen, Search } from "lucide-react";
+import { track } from "../content/track";
+import { Badge, PageHeading } from "../components/ui/shared";
+import { Button } from "../components/ui/button";
+export function Learn() {
+  const [query, setQuery] = useState("");
+  const filtered = track.chapters.filter((c) =>
+    `${c.title} ${c.description} ${c.lessons.map((l) => `${l.title} ${l.question} ${l.concept} ${l.prompt}`).join(" ")}`
+      .toLowerCase()
+      .includes(query.trim().toLowerCase()),
+  );
+  return (
+    <>
+      <PageHeading
+        eyebrow="LEARN / YOUR FIRST TRACK"
+        title="Become a Data Detective."
+        description="Six chapters. Twelve questions worth asking. One new way of thinking."
+      />
+      <section className="track-banner panel">
+        <span className="icon-tile">
+          <BookOpen size={30} />
+        </span>
+        <div>
+          <h2>Start with a question. Finish with evidence.</h2>
+          <p className="muted">
+            Beginner friendly · 12 lesson previews · Full interactive
+            assessments arrive in later phases.
+          </p>
+        </div>
+        <Badge tone="teal">CONTENT V1</Badge>
+      </section>
+      <label className="search-field">
+        <Search size={18} />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Find a chapter or lesson…"
+          aria-label="Find a chapter or lesson"
+        />
+      </label>
+      <div className="chapter-grid">
+        {filtered.map((c) => (
+          <section className="panel chapter" key={c.id}>
+            <div className="section-top">
+              <span className="chapter-number">0{c.id}</span>
+              <Badge>2 LESSON PREVIEWS</Badge>
+            </div>
+            <h2>{c.title}</h2>
+            <p className="muted">{c.description}</p>
+            <div className="lesson-links">
+              {c.lessons.map((l) => (
+                <Link key={l.id} to={`/learn/${l.id}`}>
+                  <span>
+                    <BookOpen size={16} />
+                    {l.title}
+                  </span>
+                  <span>
+                    {l.minutes}m <ArrowRight size={15} />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+      {!filtered.length && (
+        <section className="panel empty-state">
+          <h2>No matching lessons</h2>
+          <p>Try a topic such as Python, data or statistics.</p>
+          <Button variant="outline" onClick={() => setQuery("")}>
+            Clear search
+          </Button>
+        </section>
+      )}
+    </>
+  );
+}
