@@ -10,7 +10,7 @@ export function DraftActions({
     error: string;
     message: string;
     cloud: boolean;
-    save: () => Promise<void>;
+    save: () => Promise<unknown>;
     reload: () => void;
   };
 }) {

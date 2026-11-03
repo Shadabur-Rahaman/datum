@@ -212,3 +212,24 @@ export const demoRows = [
   },
   { id: "DL-1006", distance: 1.9, weather: "Clear", rush: "No", minutes: 19 },
 ];
+
+export const skillKeywords: Record<string, string[]> = {
+  observations: ["rows", "variables", "schema", "categorical", "numerical"],
+  hypotheses: [
+    "causality",
+    "confounding",
+    "prediction",
+    "experiment",
+    "analytical thinking",
+  ],
+  "python-basics": ["coding", "syntax", "variables"],
+  processing: ["lists", "loops", "iteration"],
+  dataframes: ["pandas", "tabular", "filter"],
+  missing: ["null", "imputation", "cleaning"],
+  distributions: ["outlier", "histogram", "shape"],
+  charts: ["visualization", "comparison"],
+  summary: ["mean", "median", "standard deviation", "numpy"],
+  uncertainty: ["sampling", "confidence", "seed"],
+  features: ["correlation", "predictors", "leakage"],
+  evaluation: ["limitations", "validation", "communication"],
+};

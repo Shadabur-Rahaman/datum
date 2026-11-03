@@ -1,11 +1,12 @@
 import { supabase } from "../../services/supabase";
 import { DraftConflict, readGuest, saveGuest } from "./guest";
 import { validateBody, validateDraft, type DraftBody } from "./schema";
+import { isDocument } from "../journey/schema";
 export async function loadDraft(userId: string | null, id: string) {
   if (!userId) return readGuest(id);
   if (!supabase) throw new Error("Cloud connection is unavailable.");
   const { data, error } = await supabase
-    .from("user_drafts")
+    .from(isDocument(id) ? "learning_documents" : "user_drafts")
     .select("*")
     .eq("user_id", userId)
     .eq("content_id", id)
@@ -23,13 +24,16 @@ export async function persistDraft(
   validateBody(id, body);
   if (!userId) return saveGuest(id, body, revision);
   if (!supabase) throw new Error("Cloud connection is unavailable.");
-  const { data, error } = await supabase.rpc("save_draft", {
-    p_content_id: id,
-    p_version: 1,
-    p_body: body,
-    p_expected_revision: revision,
-    p_owner: userId,
-  });
+  const { data, error } = await supabase.rpc(
+    isDocument(id) ? "save_learning_document" : "save_draft",
+    {
+      p_content_id: id,
+      p_version: 1,
+      p_body: body,
+      p_expected_revision: revision,
+      p_owner: userId,
+    },
+  );
   if (error?.code === "40001") throw new DraftConflict();
   if (error) throw error;
   return validateDraft(data);

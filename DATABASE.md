@@ -1,3 +1,11 @@
+# Current V2.1 database additions
+
+Migrations 002–004 preserve the foundation schema and add owner-readable learning documents, private quiz grading, feedback and mentor budgets. `save_learning_document` uses authenticated owner checks, top-level JSON allowlists/size bounds, advisory locking and revision checks. Document contents are learner-authored and never establish verified scores. Import now supports up to 30 documents / 700 KB; each new document is bounded to 600 KB. Export schema version 2 includes learning documents. Original lesson/mission drafts remain unchanged.
+
+Only `grade_delivery_quiz` writes verified quiz results. Keys are inaccessible through ordinary APIs; because this repository is public, do not use this educational bank as a secret high-stakes examination. Mentor budgets are service-role-only. Deletion is implemented in `supabase/functions/delete-account`, verifies Auth identity and cascades owned rows. It is not live until deployed and tested on a disposable account. See [V2_1_RELEASE.md](V2_1_RELEASE.md) for exact activation steps and limits.
+
+## Foundation documentation (historical)
+
 # Database — Milestone 2.1
 
 Implemented migration: `supabase/migrations/202611030001_foundation.sql`. Idempotent catalog: `supabase/seed.sql`. No hosted project has been configured or migrated by this task.

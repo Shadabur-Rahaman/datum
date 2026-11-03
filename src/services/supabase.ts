@@ -11,10 +11,16 @@ export const supabase =
           autoRefreshToken: true,
           detectSessionInUrl: false,
         },
-        global: { fetch: (input, init) => fetch(input, {
-          ...init,
-          signal: AbortSignal.any([...(init?.signal ? [init.signal] : []), AbortSignal.timeout(15000)]),
-        }) },
+        global: {
+          fetch: (input, init) =>
+            fetch(input, {
+              ...init,
+              signal: AbortSignal.any([
+                ...(init?.signal ? [init.signal] : []),
+                AbortSignal.timeout(15000),
+              ]),
+            }),
+        },
       })
     : null;
 export const configurationMessage =

@@ -4,7 +4,7 @@ test("navigation, lesson preview and theme survive reload", async ({
   page,
 }) => {
   await page.goto("/datum/#/");
-  await expect(page.getByText("DEMO WORKSPACE")).toBeVisible();
+  await expect(page.getByText("YOUR WORKSPACE")).toBeVisible();
   await page.getByRole("link", { name: /Continue learning/ }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "From hunch to hypothesis",
@@ -22,7 +22,7 @@ test("responsive workspace and sample interactions", async ({
   page,
   isMobile,
 }) => {
-  await page.goto("/datum/#/investigate");
+  await page.goto("/datum/#/investigate/legacy");
   if (isMobile) {
     await page.getByRole("button", { name: "Brief", exact: true }).click();
     await expect(page.getByLabel("Your initial hypothesis")).toBeVisible();
@@ -64,7 +64,17 @@ test("keyboard access and mobile menu", async ({ page, isMobile }) => {
     ).toHaveAttribute("aria-expanded", "false");
   }
 });
-for (const route of ["/", "/learn", "/investigate", "/settings"])
+for (const route of [
+  "/",
+  "/learn",
+  "/investigate",
+  "/settings",
+  "/practice",
+  "/quiz",
+  "/skills",
+  "/notebook",
+  "/learn/hypotheses",
+])
   test(`accessible structure ${route}`, async ({ page }) => {
     await page.goto(`/datum/#${route}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -94,6 +104,12 @@ test("capture visual previews", async ({ page }, testInfo) => {
     fullPage: true,
   });
   await page.goto("/datum/#/investigate");
+  await expect(
+    page.getByRole("heading", {
+      name: "Make the evidence speak.",
+      includeHidden: true,
+    }),
+  ).toBeAttached();
   await page.screenshot({
     path: `test-results/${testInfo.project.name}-workspace.png`,
     fullPage: true,

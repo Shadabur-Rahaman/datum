@@ -1,6 +1,6 @@
 // Disposable real PostgreSQL instance. Never connects to or resets an existing database.
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, existsSync } from "node:fs";
+import { mkdtempSync, readFileSync, existsSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import net from "node:net";
@@ -37,7 +37,7 @@ function run(name, args) {
   });
   if (r.status !== 0)
     throw new Error(
-      `${name}: ${r.stderr ?? ""}\n${r.stdout ?? ""}\n${existsSync(join(root,'postgres.log')) ? readFileSync(join(root,'postgres.log'),'utf8') : 'No PostgreSQL log created'}`,
+      `${name}: ${r.stderr ?? ""}\n${r.stdout ?? ""}\n${existsSync(join(root, "postgres.log")) ? readFileSync(join(root, "postgres.log"), "utf8") : "No PostgreSQL log created"}`,
     );
 }
 const clients = [];
@@ -81,7 +81,7 @@ try {
     "-l",
     join(root, "postgres.log"),
     "-o",
-    `-h 127.0.0.1 -p ${port}${windows ? '' : ` -k ${root}`}`,
+    `-h 127.0.0.1 -p ${port}${windows ? "" : ` -k ${root}`}`,
     "-w",
     "start",
   ]);
@@ -89,13 +89,14 @@ try {
   const admin = await client();
   // Minimal Supabase Auth boundary fixture. Actual PostgreSQL roles, policies and RPCs run below.
   // This does NOT test GoTrue/email transport, JWT verification or a hosted Supabase project.
-  await admin.query(`create role anon nologin; create role authenticated nologin;
+  await admin.query(`create role anon nologin; create role authenticated nologin; create role service_role nologin;
     create schema auth; create table auth.users(id uuid primary key,email text unique);
     create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
     grant usage on schema auth,public to anon,authenticated; grant execute on function auth.uid() to anon,authenticated;`);
-  await admin.query(
-    readFileSync("supabase/migrations/202611030001_foundation.sql", "utf8"),
-  );
+  for (const file of readdirSync("supabase/migrations")
+    .filter((f) => f.endsWith(".sql"))
+    .sort())
+    await admin.query(readFileSync("supabase/migrations/" + file, "utf8"));
   await admin.query(readFileSync("supabase/seed.sql", "utf8"));
   await admin.query(readFileSync("supabase/seed.sql", "utf8"));
   await admin.query("insert into auth.users values($1,$2),($3,$4)", [
@@ -136,7 +137,7 @@ try {
   await check("idempotent seed and anonymous published content", async () =>
     assert.equal(
       (await anon.query("select * from public.content_items")).rowCount,
-      13,
+      14,
     ),
   );
   await admin.query(
@@ -448,6 +449,146 @@ try {
       );
     },
   );
+  await check(
+    "learning documents enforce ownership, revisions and protected writes",
+    async () => {
+      const body = { code: "print(1)", attempts: [] };
+      const saveDoc = (c, owner, revision, payload = body) =>
+        c.query(
+          "select * from public.save_learning_document('practice-count',1,$1,$2,$3)",
+          [payload, revision, owner],
+        );
+      assert.equal((await saveDoc(a, A, 0)).rows[0].revision, 1);
+      assert.equal((await saveDoc(a, A, 0)).rows[0].revision, 1);
+      assert.equal(
+        (await b.query("select * from public.learning_documents")).rowCount,
+        0,
+      );
+      await denied(saveDoc(b, A, 0));
+      await denied(a.query("update public.learning_documents set revision=9"));
+      await denied(b.query("delete from public.learning_documents"));
+      await denied(saveDoc(a, A, 0, { ...body, code: "changed" }), "40001");
+      await denied(saveDoc(a, A, 1, { ...body, verified_score: 1 }), "22023");
+    },
+  );
+  await check(
+    "quiz grades authored answers only on the server and retries idempotently",
+    async () => {
+      // Independent hand-validated fixtures, not answers read back from the solution table.
+      const answers = {
+        rows: "delivery",
+        types: ["weather", "rush"],
+        causal: "false",
+        mean: 30,
+        median: 25,
+        output: "30",
+        missing: "inspect",
+        outliers: "median",
+        split: "train",
+        sample: "false",
+        spread: 0,
+        evidence: ["source", "limits"],
+      };
+      const request = "10000000-0000-4000-8000-000000000001";
+      const grade = (c, owner, payload = answers, id = request) =>
+        c.query("select * from public.grade_delivery_quiz($1,$2,$3)", [
+          id,
+          payload,
+          owner,
+        ]);
+      const result = (await grade(a, A)).rows[0];
+      assert.equal(Number(result.verified_score), 1);
+      assert.equal(result.feedback.length, 12);
+      assert.equal((await grade(a, A)).rows[0].id, result.id);
+      await denied(grade(b, A));
+      await denied(grade(a, A, { ...answers, mean: 31 }), "22023");
+      await denied(
+        grade(a, A, { mean: 30 }, "10000000-0000-4000-8000-000000000002"),
+        "22023",
+      );
+      const wrong = {
+        ...answers,
+        mean: 31,
+        types: ["distance"],
+        evidence: ["color"],
+      };
+      const partial = (
+        await grade(a, A, wrong, "10000000-0000-4000-8000-000000000003")
+      ).rows[0];
+      assert.equal(Number(partial.verified_score), 0.75);
+      assert.equal(
+        (
+          await b.query("select * from public.quiz_attempts where id=$1", [
+            result.id,
+          ])
+        ).rowCount,
+        0,
+      );
+      await denied(
+        grade(
+          a,
+          A,
+          { ...answers, types: ["rush", "rush"] },
+          "10000000-0000-4000-8000-000000000004",
+        ),
+        "22023",
+      );
+    },
+  );
+  await check(
+    "mentor budgets are service-only and enforce per-minute limits",
+    async () => {
+      await denied(a.query("select public.consume_mentor_budget($1)", [A]));
+      await denied(b.query("select * from private.mentor_requests"));
+      for (let i = 0; i < 3; i++)
+        assert.equal(
+          (
+            await admin.query("select public.consume_mentor_budget($1) as ok", [
+              A,
+            ])
+          ).rows[0].ok,
+          true,
+        );
+      assert.equal(
+        (
+          await admin.query("select public.consume_mentor_budget($1) as ok", [
+            A,
+          ])
+        ).rows[0].ok,
+        false,
+      );
+    },
+  );
+  await check(
+    "mentor daily user and global budgets reject over-budget calls",
+    async () => {
+      await admin.query("delete from private.mentor_requests");
+      await admin.query(
+        "insert into private.mentor_requests(user_id,created_at) select $1,now()-interval '2 hours' from generate_series(1,20)",
+        [A],
+      );
+      assert.equal(
+        (
+          await admin.query("select public.consume_mentor_budget($1) as ok", [
+            A,
+          ])
+        ).rows[0].ok,
+        false,
+      );
+      await admin.query(
+        "insert into private.mentor_requests(user_id,created_at) select $1,now()-interval '2 hours' from generate_series(1,980)",
+        [A],
+      );
+      assert.equal(
+        (
+          await admin.query("select public.consume_mentor_budget($1) as ok", [
+            B,
+          ])
+        ).rows[0].ok,
+        false,
+      );
+    },
+  );
   await check("auth deletion cascades owned records", async () => {
     await admin.query("delete from auth.users where id=$1", [A]);
     for (const t of [
@@ -455,6 +596,8 @@ try {
       "user_drafts",
       "user_lesson_progress",
       "user_mission_runs",
+      "learning_documents",
+      "quiz_attempts",
     ])
       assert.equal(
         (await admin.query(`select * from public.${t} where user_id=$1`, [A]))

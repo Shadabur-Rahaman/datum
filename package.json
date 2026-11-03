@@ -1,7 +1,7 @@
 {
   "name": "datum",
-  "version": "0.2.1",
-  "description": "DATUM data science learning workspace — Phase 1",
+  "version": "0.2.2",
+  "description": "DATUM interactive data science investigations and evidence workspace",
   "scripts": {
     "test": "vitest run",
     "dev": "vite --host 127.0.0.1",
@@ -17,11 +17,13 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.5.0",
     "@supabase/supabase-js": "^2.118.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.66.0",
+    "monaco-editor": "^0.56.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.5",
@@ -35,6 +37,7 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.2.1",
@@ -46,5 +49,8 @@
     "vite": "^8.3.5",
     "vitest": "^5.1.0"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "dompurify": "3.4.17"
+  }
 }

@@ -7,6 +7,7 @@ import {
 } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../services/supabase";
+import { clearPrivateRecovery } from "../persistence/recovery";
 
 type AuthState = {
   user: User | null;
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === "SIGNED_OUT") clearPrivateRecovery();
       receivedEvent = true;
       if (active) {
         setUser(session?.user ?? null);

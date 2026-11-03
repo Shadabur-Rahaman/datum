@@ -68,3 +68,22 @@ it("keeps edits after failed save and allows retry", async () => {
   expect(result.current.dirty).toBe(false);
   expect(result.current.message).toContain("Saved on this device");
 });
+it("recovers unsaved edits across route unmount without writing guest storage", async () => {
+  const first = renderHook(() => useDraft("observations", { reflection: "" }));
+  await waitFor(() => expect(first.result.current.loading).toBe(false));
+  act(() =>
+    first.result.current.update({
+      reflection: "A claim retained during navigation",
+    }),
+  );
+  first.unmount();
+  const second = renderHook(() => useDraft("observations", { reflection: "" }));
+  await waitFor(() => expect(second.result.current.loading).toBe(false));
+  expect(second.result.current.body.reflection).toBe(
+    "A claim retained during navigation",
+  );
+  expect(second.result.current.dirty).toBe(true);
+  expect(state.save).not.toHaveBeenCalled();
+  act(() => second.result.current.reload());
+  await waitFor(() => expect(second.result.current.body.reflection).toBe(""));
+});

@@ -1,3 +1,11 @@
+# DATUM — current release 0.2.2
+
+Interactive data-science investigations with a 1,000-row reproducible lab, actual browser Python, six practice challenges, saved evidence, twelve server-graded quiz definitions and an authenticated AI gateway.
+
+The public deployment currently supports the guest learning path. Hosted accounts, quiz grading, AI and account deletion require the external configuration in [V2_1_RELEASE.md](V2_1_RELEASE.md). Eleven lessons remain guided previews. See [V2_1_FLAW_RESOLUTION_REPORT.md](V2_1_FLAW_RESOLUTION_REPORT.md) for verified results and limits.
+
+## Prior foundation release notes (historical)
+
 # DATUM — V2 Milestone 2.1
 
 An original data science learning workspace built around investigation and evidence. This delivery adds saved-work foundations to the existing preview. It is not the complete V2 learning engine.

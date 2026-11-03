@@ -22,6 +22,11 @@ import { AuthProvider, useAuth } from "./features/auth/AuthProvider";
 import { Dashboard } from "./pages/Dashboard";
 import { Learn } from "./pages/Learn";
 import { Lesson } from "./pages/Lesson";
+import { LivingLab } from "./features/lab/LivingLab";
+import { Quiz } from "./pages/Quiz";
+import { Practice } from "./pages/Practice";
+import { Notebook } from "./pages/Notebook";
+import { Skills } from "./pages/Skills";
 import { Investigate } from "./pages/Investigate";
 import { Button } from "./components/ui/button";
 import { Badge, PageHeading, Upcoming } from "./components/ui/shared";
@@ -55,48 +60,6 @@ export class ErrorBoundary extends Component<
       );
     return this.props.children;
   }
-}
-function FuturePage({ type }: { type: string }) {
-  const config: Record<
-    string,
-    { title: string; phase: number; description: string }
-  > = {
-    practice: {
-      title: "A place to think in Python.",
-      phase: 4,
-      description:
-        "Run real Python, inspect errors and test your reasoning against meaningful practice checks. The execution engine is not connected yet.",
-    },
-    quiz: {
-      title: "Understanding, put to the test.",
-      phase: 5,
-      description:
-        "Authored questions, explanations and topic-level feedback will help you find the gaps in your reasoning. No assessment or grading is available in this preview.",
-    },
-    skills: {
-      title: "Your understanding has a shape.",
-      phase: 7,
-      description:
-        "Skill DNA will connect quiz, practice and investigation evidence. No mastery has been measured. Page visits never count as evidence.",
-    },
-    notebook: {
-      title: "Every finding deserves a trail.",
-      phase: 7,
-      description:
-        "Your notebook will connect hypotheses, code, data transformations and conclusions. There are no saved evidence entries in this milestone.",
-    },
-  };
-  const c = config[type];
-  return (
-    <>
-      <PageHeading
-        eyebrow="DATA DETECTIVE / FOUNDATION PREVIEW"
-        title={navigation.find((n) => n.to === `/${type}`)?.name ?? "Workspace"}
-        description="Built around evidence. Ready for the next phase."
-      />
-      <Upcoming {...c} />
-    </>
-  );
 }
 export function App() {
   return (
@@ -169,7 +132,7 @@ function AppShell() {
             <i />
             <i />
           </span>
-          DATUM<span className="brand-version">V1</span>
+          DATUM<span className="brand-version">V2.1</span>
         </Link>
         <p className="sidebar-label">THE LEARNING ENGINE</p>
         <nav aria-label="Main navigation">
@@ -201,7 +164,7 @@ function AppShell() {
               <strong>
                 {user ? "Signed-in investigator" : "Guest investigator"}
               </strong>
-              <span>V2 · Saved work foundation</span>
+              <span>V2.1 · Evidence workspace</span>
             </div>
             <Badge>{user ? "CLOUD" : "LOCAL"}</Badge>
           </div>
@@ -265,14 +228,12 @@ function AppShell() {
               path="/learn/:lessonId"
               element={<Lesson key={location.pathname} />}
             />
-            <Route path="/investigate" element={<Investigate />} />
-            {["practice", "quiz", "skills", "notebook"].map((type) => (
-              <Route
-                key={type}
-                path={`/${type}`}
-                element={<FuturePage type={type} />}
-              />
-            ))}
+            <Route path="/investigate" element={<LivingLab />} />
+            <Route path="/investigate/legacy" element={<Investigate />} />
+            <Route path="/practice" element={<Practice />} />
+            <Route path="/notebook" element={<Notebook />} />
+            <Route path="/skills" element={<Skills />} />
+            <Route path="/quiz" element={<Quiz />} />
             <Route
               path="/settings"
               element={<SettingsPage theme={theme} setTheme={setTheme} />}

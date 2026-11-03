@@ -1,3 +1,5 @@
+import { LessonExperiment } from "../features/journey/LessonExperiment";
+import { useLastLesson } from "../features/journey/useLastLesson";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Clock3 } from "lucide-react";
@@ -9,6 +11,7 @@ import { DraftActions } from "../features/persistence/DraftActions";
 export function Lesson() {
   const { lessonId } = useParams();
   const lesson = lessons.find((l) => l.id === lessonId);
+  useLastLesson(lesson?.id);
   const saved = useDraft(lessonId ?? "", { reflection: "" });
   const draft = saved.body.reflection;
   const [show, setShow] = useState(false);
@@ -30,7 +33,7 @@ export function Lesson() {
         Data Detective track
       </Link>
       <PageHeading
-        eyebrow={`CHAPTER 0${lesson.chapter} / LESSON PREVIEW`}
+        eyebrow={`CHAPTER 0${lesson.chapter} / ${lesson.id === "hypotheses" ? "INTERACTIVE LESSON" : "LESSON PREVIEW"}`}
         title={lesson.title}
         description={lesson.chapterTitle}
       >
@@ -44,6 +47,7 @@ export function Lesson() {
           <Badge tone="teal">01 / INVESTIGATE</Badge>
           <h2>{lesson.question}</h2>
           <p className="large-copy">{lesson.concept}</p>
+          {lesson.id === "hypotheses" && <LessonExperiment />}
           <hr />
           <p className="eyebrow">02 / MAKE A PREDICTION</p>
           <label htmlFor="reflection">{lesson.prompt}</label>

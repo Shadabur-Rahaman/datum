@@ -12,7 +12,35 @@ import {
 import { Link } from "react-router-dom";
 import { Badge, PageHeading } from "../components/ui/shared";
 import { Button } from "../components/ui/button";
+import { useJourney } from "../features/journey/useJourney";
+import { lessons } from "../content/track";
+import { practiceSchema, notebookSchema } from "../features/journey/schema";
 export function Dashboard() {
+  const { drafts, quizzes, loading, error } = useJourney();
+  const reflections = drafts.filter((d) =>
+    lessons.some((l) => l.id === d.content_id),
+  );
+  const practice = drafts
+    .filter((d) => d.content_id.startsWith("practice-"))
+    .flatMap((d) => {
+      const p = practiceSchema.safeParse(d.body);
+      return p.success ? p.data.attempts : [];
+    });
+  const book = notebookSchema.safeParse(
+    drafts.find((d) => d.content_id === "evidence-notebook")?.body,
+  );
+  const findings = book.success ? book.data.entries.length : 0;
+  const latest = [...reflections].sort((a, b) =>
+    b.updated_at.localeCompare(a.updated_at),
+  )[0];
+  const navigation = drafts.find(
+    (d) => d.content_id === "learner-navigation",
+  )?.body;
+  const last =
+    navigation && "lastLesson" in navigation ? navigation.lastLesson : "";
+  const resume = lessons.some((l) => l.id === last)
+    ? last
+    : (latest?.content_id ?? "hypotheses");
   return (
     <>
       <PageHeading
@@ -20,7 +48,7 @@ export function Dashboard() {
         title="Good questions lead to discoveries."
         description="Welcome, investigator. Follow your curiosity. Build your evidence."
       >
-        <Badge tone="amber">DEMO WORKSPACE</Badge>
+        <Badge tone="amber">YOUR WORKSPACE</Badge>
       </PageHeading>
       <div className="demo-note">
         <span className="status-dot" />
@@ -54,7 +82,7 @@ export function Dashboard() {
               </span>
             </div>
             <Button asChild>
-              <Link to="/learn/hypotheses">
+              <Link to={`/learn/${resume}`}>
                 Continue learning <ArrowRight size={16} />
               </Link>
             </Button>
@@ -71,11 +99,11 @@ export function Dashboard() {
             <span className="orbit-label">OBSERVE. QUESTION. DISCOVER.</span>
           </div>
           <div className="hero-footer">
-            <span>Sample track progress</span>
+            <span>Saved lesson reflections</span>
             <div className="progress">
-              <span style={{ width: "17%" }} />
+              <span style={{ width: `${(reflections.length / 12) * 100}%` }} />
             </div>
-            <strong>2 / 12 lessons</strong>
+            <strong>{reflections.length} / 12 reflections</strong>
           </div>
         </section>
         <section className="panel mission-card">
@@ -83,7 +111,7 @@ export function Dashboard() {
             <span className="icon-tile violet">
               <FlaskConical size={22} />
             </span>
-            <Badge tone="violet">MISSION PREVIEW</Badge>
+            <Badge tone="violet">LIVING INVESTIGATION</Badge>
           </div>
           <p className="eyebrow">YOUR NEXT INVESTIGATION</p>
           <h2>
@@ -111,33 +139,33 @@ export function Dashboard() {
         {[
           {
             icon: BookOpen,
-            value: "2 / 12",
-            label: "Lessons completed",
+            value: `${reflections.length} / 12`,
+            label: "Saved lesson reflections",
             note: "A foundation for better questions",
           },
           {
             icon: Code2,
-            value: "1 / 12",
+            value: String(practice.filter((a) => a.passed).length),
             label: "Practice checks passed",
-            note: "Illustrative, unverified practice",
+            note: "Unverified browser practice",
           },
           {
             icon: Target,
-            value: "1 / 3",
-            label: "Investigations explored",
+            value: String(findings),
+            label: "Saved findings",
             note: "From observation to explanation",
           },
           {
             icon: Fingerprint,
-            value: "3",
-            label: "Skills in development",
+            value: String(quizzes.length),
+            label: "Verified quiz attempts",
             note: "Understanding takes evidence",
           },
         ].map(({ icon: Icon, value, label, note }) => (
           <section className="panel stat" key={label}>
             <div className="section-top">
               <Icon size={18} />
-              <span className="micro">DEMO</span>
+              <span className="micro">SAVED</span>
             </div>
             <strong>{value}</strong>
             <h3>{label}</h3>
@@ -154,24 +182,14 @@ export function Dashboard() {
             </Link>
           </div>
           <p className="muted small">
-            Example evidence profile · not a measure of intelligence
+            Evidence grows through saved findings, practice and verified
+            assessments. Page visits never increase mastery.
           </p>
-          <div className="skill-bars">
-            {[
-              ["Analytical thinking", 68],
-              ["Python foundations", 42],
-              ["Data cleaning", 25],
-              ["Statistical reasoning", 12],
-            ].map(([name, value]) => (
-              <div className="skill-row" key={name}>
-                <span>{name}</span>
-                <div className="progress">
-                  <span style={{ width: `${value}%` }} />
-                </div>
-                <span>{value}%</span>
-              </div>
-            ))}
-          </div>
+          <p>
+            {quizzes.length
+              ? `${quizzes.length} verified assessments are available in Skill DNA.`
+              : "No verified assessment evidence yet. Start with an investigation or coding challenge."}
+          </p>
           <div className="insight">
             <Sparkles size={18} />
             <p>
@@ -184,39 +202,26 @@ export function Dashboard() {
         <section className="panel">
           <div className="section-top">
             <h2>A little curiosity, every day</h2>
-            <Badge>DEMO</Badge>
+            <Badge>SAVED</Badge>
           </div>
-          <p className="muted small">
-            Sample weekly activity · minutes of focused practice
-          </p>
-          <div
-            className="activity"
-            role="img"
-            aria-label="Example activity: Monday 15, Tuesday 25, Wednesday 10, Thursday 35, Friday 20, Saturday 0, Sunday 0 minutes."
-          >
-            {[15, 25, 10, 35, 20, 0, 0].map((v, i) => (
-              <div key={i}>
-                <span className="activity-value">{v}</span>
-                <div className="activity-track">
-                  <div style={{ height: `${Math.max((v / 35) * 100, 3)}%` }} />
-                </div>
-                <span>{["M", "T", "W", "T", "F", "S", "S"][i]}</span>
-              </div>
-            ))}
-          </div>
-          <div className="recent">
-            <span className="status-dot" />
-            <div>
-              <strong>From hunch to hypothesis</strong>
-              <p>Example recent lesson · preview available</p>
-            </div>
-            <Link
-              to="/learn/hypotheses"
-              aria-label="Open From hunch to hypothesis"
-            >
-              <ArrowUpRight size={18} />
-            </Link>
-          </div>
+          <p className="muted small">Recent saved work</p>
+          {drafts.length ? (
+            [...drafts]
+              .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+              .slice(0, 5)
+              .map((d) => (
+                <p key={d.content_id}>
+                  {lessons.find((l) => l.id === d.content_id)?.title ??
+                    d.content_id.replaceAll("-", " ")}{" "}
+                  · {new Date(d.updated_at).toLocaleDateString()}
+                </p>
+              ))
+          ) : (
+            <p>
+              Start a lesson, save a reflection, and your activity will appear
+              here.
+            </p>
+          )}
         </section>
       </div>
       <footer className="page-footer">

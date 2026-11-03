@@ -23,3 +23,8 @@ enable_confirmations = true
 [auth.email.template.magic_link]
 subject = "Your DATUM sign-in code"
 content_path = "./supabase/templates/otp.html"
+
+[functions.mentor]
+verify_jwt = true
+[functions.delete-account]
+verify_jwt = true

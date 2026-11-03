@@ -9,6 +9,7 @@ import { downloadJson } from "../persistence/repository";
 
 export function AccountPanel() {
   const { user, loading, error: authError, retry } = useAuth();
+  const [deleteText, setDeleteText] = useState("");
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
   const [sent, setSent] = useState(false);
@@ -21,7 +22,9 @@ export function AccountPanel() {
   const [refresh, setRefresh] = useState(0);
   useEffect(() => {
     try {
-      setGuestCount(listGuest().length);
+      setGuestCount(
+        listGuest().filter((d) => d.content_id !== "learner-navigation").length,
+      );
     } catch {
       setError(
         "Guest storage is unreadable. Export or recover the browser data before importing it.",
@@ -332,12 +335,48 @@ export function AccountPanel() {
           >
             Export account data
           </Button>
+          <label>
+            Type DELETE MY ACCOUNT to permanently delete your cloud account
+            <input
+              value={deleteText}
+              onChange={(e) => setDeleteText(e.target.value)}
+              autoComplete="off"
+            />
+          </label>
+          <Button
+            variant="outline"
+            disabled={busy || deleteText !== "DELETE MY ACCOUNT"}
+            onClick={() => {
+              if (
+                !window.confirm(
+                  "Permanently delete your cloud account and all its learning records? Export first if you need a copy.",
+                )
+              )
+                return;
+              void action(async () => {
+                const { data, error } = await supabase!.functions.invoke(
+                  "delete-account",
+                  { body: { confirmation: deleteText } },
+                );
+                if (error || data?.deleted !== true)
+                  throw new Error(
+                    "Account deletion could not be verified. Your session is retained; retry later.",
+                  );
+                await supabase!.auth.signOut({ scope: "local" });
+                setDeleteText("");
+                setMessage(
+                  "Cloud account deleted. Device-only guest drafts are separate.",
+                );
+              });
+            }}
+          >
+            Delete cloud account
+          </Button>
         </>
       )}
       <p className="small muted">
-        Account deletion requires a verified server-side request. Self-service
-        deletion is not enabled in this milestone; the operator procedure and
-        retention policy are documented in DATABASE.md.
+        Cloud account deletion requires the deployed deletion service. Export
+        first; deletion removes owned records and cannot be undone here.
       </p>
       {error && (
         <p className="form-error" role="alert">

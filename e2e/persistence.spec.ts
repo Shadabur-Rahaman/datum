@@ -23,7 +23,7 @@ test("mission draft, code and filtered chart resume together", async ({
   page,
   isMobile,
 }) => {
-  await page.goto("/datum/#/investigate");
+  await page.goto("/datum/#/investigate/legacy");
   if (isMobile)
     await page.getByRole("button", { name: "Brief", exact: true }).click();
   await page

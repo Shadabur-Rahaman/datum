@@ -5,6 +5,7 @@ import {
   type DraftBody,
 } from "./schema";
 const prefix = "datum:guest:v1:";
+import { clearGuestRecovery } from "./recovery";
 export class DraftConflict extends Error {
   constructor() {
     super(
@@ -56,6 +57,7 @@ export function listGuest(): Draft[] {
   return result;
 }
 export function clearGuest() {
+  clearGuestRecovery();
   for (const draft of listGuest())
     localStorage.removeItem(prefix + draft.content_id);
 }

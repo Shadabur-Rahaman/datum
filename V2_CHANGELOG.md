@@ -1,3 +1,7 @@
+# 2026-11-03 — V2.1 product upgrade / package 0.2.2
+
+Added living synthetic investigation, real worker-based Python and six challenges, functional evidence notebook and learner statistics, interactive hypothesis lesson, twelve-question SQL-graded assessment, and authenticated mentor/deletion handlers. Preserved existing guest/cloud draft APIs and legacy workspace. See V2_1_RELEASE.md and V2_1_FLAW_RESOLUTION_REPORT.md for scope, verification and external blockers.
+
 # V2 changelog — 0.2.1
 
 Date: 2026-11-03 (Asia/Calcutta). Scope: audit, foundation repairs and Milestone 2.1 only.

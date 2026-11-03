@@ -3,10 +3,14 @@ import { useAuth } from "../auth/AuthProvider";
 import { loadDraft, persistDraft } from "./repository";
 import { DraftConflict } from "./guest";
 import type { DraftBody } from "./schema";
+// Session-only recovery survives route unmounts without copying private cloud work
+// into guest/browser storage. Explicit saves remain the durability boundary.
+import { recovery } from "./recovery";
 
 export function useDraft<T extends DraftBody>(id: string, initial: T) {
   const { user, loading: authLoading, error: authError } = useAuth();
   const owner = user?.id ?? null;
+  const recoveryKey = `${owner ?? "guest"}:${id}`;
   const [body, setBody] = useState<T>(initial);
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -39,6 +43,15 @@ export function useDraft<T extends DraftBody>(id: string, initial: T) {
             owner
               ? "Restored from your account."
               : "Restored from this device.",
+          );
+        }
+        const pending = recovery.get(recoveryKey);
+        if (pending) {
+          setBody(pending.body as T);
+          setRevision(pending.revision);
+          setDirty(true);
+          setMessage(
+            "Restored unsaved edits from this session. Save to keep them after closing.",
           );
         }
         setLoading(false);
@@ -76,8 +89,10 @@ export function useDraft<T extends DraftBody>(id: string, initial: T) {
       if (current !== epoch.current || identity.current !== originalOwner)
         return;
       setRevision(saved.revision);
+      recovery.delete(recoveryKey);
       setDirty(false);
       setMessage(owner ? "Saved to your account." : "Saved on this device.");
+      return true;
     } catch (failure) {
       if (current === epoch.current)
         setError(
@@ -85,6 +100,7 @@ export function useDraft<T extends DraftBody>(id: string, initial: T) {
             ? failure.message
             : "Save failed. Your edits are still here. Check your connection or browser storage and retry.",
         );
+      return false;
     } finally {
       if (current === epoch.current) setSaving(false);
     }
@@ -92,12 +108,20 @@ export function useDraft<T extends DraftBody>(id: string, initial: T) {
   return {
     body,
     update: (patch: Partial<T>) => {
-      setBody((old) => ({ ...old, ...patch }));
+      if (loading || saving || authLoading || authError) return;
+      setBody((old) => {
+        const next = { ...old, ...patch };
+        recovery.set(recoveryKey, { body: next, revision });
+        return next;
+      });
       setDirty(true);
       setMessage("");
     },
     save,
-    reload: () => setReload((n) => n + 1),
+    reload: () => {
+      recovery.delete(recoveryKey);
+      setReload((n) => n + 1);
+    },
     loading: loading || authLoading,
     saving,
     dirty,

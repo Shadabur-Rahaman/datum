@@ -24,10 +24,17 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Validate authenticated Edge Function boundaries
+        run: |
+          deno check supabase/functions/mentor/index.ts supabase/functions/delete-account/index.ts
+          deno test --allow-env supabase/functions/boundaries_test.ts
       - name: Test real PostgreSQL ownership rules
         run: npm run test:db
       - run: npx playwright install --with-deps chromium
-      - name: Test production hash routes, guest recovery and accessibility
+      - name: Test production routes, real Python, evidence recovery and accessibility
         run: npm run test:e2e
       - run: npm run build:pages
         env:

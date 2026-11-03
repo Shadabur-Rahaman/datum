@@ -63,7 +63,7 @@ describe("routes and honest preview states", () => {
     expect(screen.getByText(/authored reflection guide/)).toBeVisible();
   });
   it("switches analysis views and resets the editable draft", async () => {
-    mount("/investigate");
+    mount("/investigate/legacy");
     await userEvent.click(screen.getByRole("button", { name: "Python" }));
     const editor = screen.getByRole("textbox", { name: "Python draft" });
     await userEvent.clear(editor);

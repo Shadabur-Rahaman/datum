@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, BookOpen, Search } from "lucide-react";
-import { track } from "../content/track";
+import { track, skillKeywords } from "../content/track";
 import { Badge, PageHeading } from "../components/ui/shared";
 import { Button } from "../components/ui/button";
 export function Learn() {
   const [query, setQuery] = useState("");
   const filtered = track.chapters.filter((c) =>
-    `${c.title} ${c.description} ${c.lessons.map((l) => `${l.title} ${l.question} ${l.concept} ${l.prompt}`).join(" ")}`
+    `${c.title} ${c.description} ${c.lessons.map((l) => `${l.title} ${l.question} ${l.concept} ${l.prompt} ${(skillKeywords[l.id] ?? []).join(" ")}`).join(" ")}`
       .toLowerCase()
       .includes(query.trim().toLowerCase()),
   );
@@ -25,8 +25,9 @@ export function Learn() {
         <div>
           <h2>Start with a question. Finish with evidence.</h2>
           <p className="muted">
-            Beginner friendly · 12 lesson previews · Full interactive
-            assessments arrive in later phases.
+            Beginner friendly · 12 lessons · Start with the interactive
+            hypothesis lesson; the remaining lessons retain their guided
+            previews.
           </p>
         </div>
         <Badge tone="teal">CONTENT V1</Badge>

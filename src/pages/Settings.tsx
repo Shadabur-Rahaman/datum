@@ -47,9 +47,9 @@ export function SettingsPage({
         <hr />
         <h2>About this build</h2>
         <p className="muted">
-          DATUM v0.2.1 · Saved work foundation. The dashboard still shows
-          labeled examples. Python, assessments and AI remain upcoming
-          integrations.
+          DATUM v0.2.2 · Living investigations, real browser Python, and a
+          reproducible evidence notebook. Cloud grading and AI require
+          configured services; their availability is shown where you use them.
         </p>
         <Button asChild variant="outline">
           <Link to="/learn">
