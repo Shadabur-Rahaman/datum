@@ -1,3 +1,4 @@
+import { PasswordAuth } from "./PasswordAuth";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { Button } from "../../components/ui/button";
@@ -235,6 +236,9 @@ export function AccountPanel() {
           <p className="muted">{configurationMessage}</p>
         </>
       )}
+      {supabase && !loading && !authError && (
+        <PasswordAuth signedIn={!!user} key={user?.id ?? "guest"} />
+      )}
       <hr />
       <h3>Guest drafts on this device</h3>
       <p className="muted">
@@ -244,8 +248,9 @@ export function AccountPanel() {
       {user && (
         <>
           <p className="small muted">
-            Import adds missing drafts to this account. Existing cloud drafts
-            are kept. Your local backup remains until you clear it.
+            Import adds missing drafts and merges notebook entries by identity.
+            Existing cloud copies win conflicts. Your local backup remains until
+            you clear it.
           </p>
           <Button
             disabled={busy || !guestCount}

@@ -1,3 +1,9 @@
+import { Recommendation } from "../features/journey/Recommendation";
+import { mastery, recommend } from "../features/journey/recommendations";
+import { activitySchema } from "../features/lessons/schema";
+import { lessons } from "../content/track";
+import { lazy, Suspense } from "react";
+const Mentor = lazy(() => import("../features/mentor/Mentor"));
 import { Link } from "react-router-dom";
 import { PageHeading } from "../components/ui/shared";
 import { useJourney } from "../features/journey/useJourney";
@@ -22,6 +28,81 @@ export function Skills() {
         <p role="alert">{error}</p>
       ) : (
         <>
+          <Recommendation drafts={drafts} quizzes={quizzes} />
+          <section className="panel lesson-body">
+            <h2>Skill graph</h2>
+            <p>
+              Data literacy → Python → Data cleaning → Visual reasoning →
+              Statistical reasoning → Evaluation
+            </p>
+            <p>This describes learning dependencies, not a learner ranking.</p>
+            {mastery(quizzes).map((item) => (
+              <div key={item.skill}>
+                <h3>
+                  {item.skill} · {item.state}
+                </h3>
+                <p>{item.reason}</p>
+              </div>
+            ))}
+          </section>
+          <section className="panel lesson-body">
+            <h2>Interactive lesson evidence · unverified</h2>
+            {lessons.map((lesson) => {
+              const parsed = activitySchema.safeParse(
+                drafts.find(
+                  (d) => d.content_id === "lesson-activity-" + lesson.id,
+                )?.body,
+              );
+              return (
+                <p key={lesson.id}>
+                  <Link to={"/learn/" + lesson.id}>{lesson.title}</Link>:{" "}
+                  {parsed.success
+                    ? `${parsed.data.attempts.filter((a) => a.passed).length} passing checks / ${parsed.data.attempts.length} attempts · ${parsed.data.hints} hints used`
+                    : "No recorded checks"}
+                </p>
+              );
+            })}
+          </section>
+          <section className="panel lesson-body">
+            <h2>Recent activity timeline</h2>
+            <p>
+              Saved work is participation; only server-graded attempts count
+              toward verified skill indicators.
+            </p>
+            <ol>
+              {[
+                ...drafts.map((d) => ({
+                  id: d.content_id,
+                  at: d.updated_at,
+                  label: `Saved ${d.content_id} · unverified work`,
+                })),
+                ...quizzes.map((q) => ({
+                  id: q.id,
+                  at: q.created_at,
+                  label: `Verified quiz: ${Math.round((q.verified_score ?? 0) * 100)}%`,
+                })),
+              ]
+                .sort((a, b) => b.at.localeCompare(a.at))
+                .slice(0, 20)
+                .map((event) => (
+                  <li key={event.id}>
+                    {new Date(event.at).toLocaleString()} · {event.label}
+                  </li>
+                ))}
+            </ol>
+          </section>
+          <details className="panel lesson-body">
+            <summary>Ask the learning navigator</summary>
+            <Suspense fallback={<p>Loading navigator…</p>}>
+              <Mentor
+                defaultRole="navigator"
+                context={{
+                  recommendation: recommend(drafts, quizzes),
+                  verified: mastery(quizzes),
+                }}
+              />
+            </Suspense>
+          </details>
           <section className="panel lesson-body">
             <h2>Recent verified assessment evidence</h2>
             <p>

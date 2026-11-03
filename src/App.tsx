@@ -132,7 +132,7 @@ function AppShell() {
             <i />
             <i />
           </span>
-          DATUM<span className="brand-version">V2.1</span>
+          DATUM<span className="brand-version">V2.2</span>
         </Link>
         <p className="sidebar-label">THE LEARNING ENGINE</p>
         <nav aria-label="Main navigation">
@@ -164,7 +164,7 @@ function AppShell() {
               <strong>
                 {user ? "Signed-in investigator" : "Guest investigator"}
               </strong>
-              <span>V2.1 · Evidence workspace</span>
+              <span>V2.2 · Evidence workspace</span>
             </div>
             <Badge>{user ? "CLOUD" : "LOCAL"}</Badge>
           </div>

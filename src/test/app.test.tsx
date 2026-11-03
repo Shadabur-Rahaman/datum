@@ -56,7 +56,7 @@ describe("routes and honest preview states", () => {
   });
   it("reveals authored guidance and accepts a reflection", async () => {
     mount("/learn/observations");
-    await userEvent.type(screen.getByRole("textbox"), "Distance and weather");
+    await userEvent.type(screen.getByLabelText("Which variables would you collect to investigate a late delivery, and why?"), "Distance and weather");
     await userEvent.click(
       screen.getByRole("button", { name: "Show thinking guide" }),
     );

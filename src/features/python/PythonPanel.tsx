@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/ui/button";
 import type { Check } from "./challenges";
+const Mentor = lazy(() => import("../mentor/Mentor"));
 const CodeEditor = lazy(() => import("./CodeEditor"));
 export type Result = { name: string; passed: boolean; actual: string };
 export default function PythonPanel({
@@ -22,6 +23,13 @@ export default function PythonPanel({
     [output, setOutput] = useState("Python runs only when you press Run."),
     [rich, setRich] = useState(false),
     [checks, setChecks] = useState<Result[]>([]);
+  const [execution, setExecution] = useState<{
+    code: string;
+    output: string;
+    error: string;
+    rowCount: number;
+    at: string;
+  } | null>(null);
   const worker = useRef<Worker | null>(null),
     timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   function stop() {
@@ -70,6 +78,13 @@ export default function PythonPanel({
         );
       }
       if (data.type === "done" || data.type === "error") {
+        setExecution({
+          code,
+          output: String(data.output ?? "").slice(-1200),
+          error: String(data.error ?? "").slice(-1500),
+          rowCount: rows.length,
+          at: new Date().toISOString(),
+        });
         stop();
         setBusy(false);
         setOutput(
@@ -142,6 +157,28 @@ export default function PythonPanel({
       <pre className="python-output" aria-label="Python console" role="status">
         {output}
       </pre>
+      {execution && (
+        <details>
+          <summary>Help with this Python run</summary>
+          <p>
+            The mentor receives the code from this run and its actual output or
+            traceback. Later edits are not represented until you run again.
+          </p>
+          <Suspense fallback={<p>Loading mentor…</p>}>
+            <Mentor
+              defaultRole="debugger"
+              context={{
+                source: "real Pyodide worker",
+                error: execution.error.slice(-600),
+                output: execution.output.slice(-250),
+                code: execution.code.slice(0, 600),
+                at: execution.at,
+                rowCount: execution.rowCount,
+              }}
+            />
+          </Suspense>
+        </details>
+      )}
       {checks.map((c) => (
         <p key={c.name}>
           {c.passed ? "Passed" : "Needs work"} · {c.name}: {c.actual}

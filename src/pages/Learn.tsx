@@ -25,12 +25,11 @@ export function Learn() {
         <div>
           <h2>Start with a question. Finish with evidence.</h2>
           <p className="muted">
-            Beginner friendly · 12 lessons · Start with the interactive
-            hypothesis lesson; the remaining lessons retain their guided
-            previews.
+            Beginner friendly · 12 interactive lessons · Predict, manipulate
+            real calculations, check your understanding and save your reasoning.
           </p>
         </div>
-        <Badge tone="teal">CONTENT V1</Badge>
+        <Badge tone="teal">INTERACTIVE CURRICULUM</Badge>
       </section>
       <label className="search-field">
         <Search size={18} />
@@ -46,7 +45,7 @@ export function Learn() {
           <section className="panel chapter" key={c.id}>
             <div className="section-top">
               <span className="chapter-number">0{c.id}</span>
-              <Badge>2 LESSON PREVIEWS</Badge>
+              <Badge>2 INTERACTIVE LESSONS</Badge>
             </div>
             <h2>{c.title}</h2>
             <p className="muted">{c.description}</p>

@@ -18,6 +18,8 @@ Deno.test(
       "SUPABASE_SERVICE_ROLE_KEY",
       "AI_MODEL",
       "AI_API_KEY",
+      "GROQ_FALLBACK_KEY",
+      "GROQ_FALLBACK_MODEL",
     ];
     const old = envNames.map((k) => Deno.env.get(k));
     for (const k of envNames)
@@ -103,6 +105,24 @@ Deno.test(
           .status === 400,
         "oversized request rejected",
       );
+      let charges = 0, primaryCalls = 0, fallbackCalls = 0;
+      globalThis.fetch = (async (url) => {
+        const endpoint=String(url);
+        if(endpoint.endsWith("/auth/v1/user")) return Response.json({id:"verified-user"});
+        if(endpoint.includes("consume_mentor_budget")) {charges++;return Response.json(true);}
+        if(endpoint.includes("googleapis")) {primaryCalls++;return new Response("unavailable",{status:503});}
+        fallbackCalls++;
+        return Response.json({choices:[{message:{content:JSON.stringify({question:"Which line failed?",hint:"Inspect the supplied traceback.",limitation:"I did not execute your code."})}}]});
+      }) as typeof fetch;
+      assert((await mentor(request({role:"debugger",prompt:"Help with this error",context:{error:"NameError"}}))).status===200,"optional fallback returns validated guidance");
+      assert(charges===2 && primaryCalls===1 && fallbackCalls===1,"fallback is bounded and consumes a second budget slot");
+      globalThis.fetch = (async (url) => {
+        const endpoint=String(url);
+        if(endpoint.endsWith("/auth/v1/user")) return Response.json({id:"verified-user"});
+        if(endpoint.includes("consume_mentor_budget")) return Response.json(true);
+        return new Response("down",{status:503});
+      }) as typeof fetch;
+      assert((await mentor(request({role:"navigator",prompt:"What next?"}))).status===503,"both provider failures return honest unavailability");
       await import("./delete-account/index.ts");
       const deletion = handler;
       let deleteUrl = "";

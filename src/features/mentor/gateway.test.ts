@@ -38,17 +38,13 @@ it("uses real provider contract, validates reply and handles provider errors", a
     hint: "Compare the counts.",
     limitation: "Association is not causation.",
   };
-  const fetcher = vi
-    .fn()
-    .mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          candidates: [
-            { content: { parts: [{ text: JSON.stringify(reply) }] } },
-          ],
-        }),
-      ),
-    );
+  const fetcher = vi.fn().mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        candidates: [{ content: { parts: [{ text: JSON.stringify(reply) }] } }],
+      }),
+    ),
+  );
   expect(
     await generate(
       { role: "tutor", prompt: "Help", context: {} },

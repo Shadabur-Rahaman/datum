@@ -1748,3 +1748,10 @@ fieldset {
   background: var(--panel);
   z-index: 1;
 }
+
+/* Keep the dashboard action and progress strip in normal flow at all sizes. */
+.hero { display: flex; flex-direction: column; padding-bottom: 0; }
+.hero-copy { margin-bottom: 24px; }
+.hero-footer { position: relative; margin-top: auto; padding-left: 0; padding-right: 0; flex-wrap: wrap; }
+.interactive-lesson { margin-block: 28px; }
+.interactive-lesson .skill-row { display: grid; grid-template-columns: minmax(70px, 1fr) minmax(80px, 2fr) auto; align-items: center; gap: 12px; margin-block: 8px; }

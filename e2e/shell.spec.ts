@@ -10,7 +10,7 @@ test("navigation, lesson preview and theme survive reload", async ({
     "From hunch to hypothesis",
   );
   await page
-    .getByRole("textbox")
+    .locator("#reflection")
     .fill("Rain may be associated with longer delivery times.");
   await page.getByRole("button", { name: "Show thinking guide" }).click();
   await expect(page.getByText(/authored reflection guide/)).toBeVisible();

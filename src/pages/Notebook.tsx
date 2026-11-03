@@ -13,11 +13,28 @@ export function Notebook() {
     { user } = useAuth(),
     navigate = useNavigate(),
     [message, setMessage] = useState("");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [page, setPage] = useState(0);
+  const matched = saved.body.entries.filter(
+    (e) =>
+      (e.hypothesis + " " + e.finding + " " + e.limitations)
+        .toLowerCase()
+        .includes(search.toLowerCase()) &&
+      (filter === "all" ||
+        (filter === "draft"
+          ? e.finding.length < 30 || e.limitations.length < 20
+          : e.finding.length >= 30 && e.limitations.length >= 20)),
+  );
+  const currentPage = Math.min(
+    page,
+    Math.max(0, Math.ceil(matched.length / 5) - 1),
+  );
   function exportMarkdown() {
     const text = saved.body.entries
       .map(
         (e) =>
-          `# Delivery investigation\n\n${e.createdAt}\n\nDataset: ${e.dataset} v${e.version}, seed ${e.seed}\n\n## Hypothesis\n${e.hypothesis}\n\n## Experiment\n\`\`\`json\n${JSON.stringify(e.config, null, 2)}\n\`\`\`\n\n## Code\n\`\`\`python\n${e.code}\n\`\`\`\n\n## Finding\n${e.finding}\n\n## Limitations\n${e.limitations}\n\n## Reflection\n${e.reflection}`,
+          `# Delivery investigation\n\n${e.createdAt}\n\nDataset: ${e.dataset} v${e.version}, seed ${e.seed}\n\n## Hypothesis\n${e.hypothesis}\n\n## Experiment\n\`\`\`json\n${JSON.stringify(e.config, null, 2)}\n\`\`\`\n\nMission: delivery-delay\nChart: weather group mean duration (minutes), missing excluded; recompute from the stored configuration.\n\n## Code\n\`\`\`python\n${e.code}\n\`\`\`\n\n## Finding\n${e.finding}\n\n## Limitations\n${e.limitations}\n\n## Reflection\n${e.reflection}`,
       )
       .join("\n\n---\n\n");
     const url = URL.createObjectURL(
@@ -77,6 +94,55 @@ export function Notebook() {
       >
         Export Markdown
       </Button>
+      <section className="panel lesson-body" aria-label="Find notebook entries">
+        <label>
+          Search findings
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+          />
+        </label>
+        <label>
+          Entry status
+          <select
+            value={filter}
+            onChange={(e) => {
+              setFilter(e.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="all">All entries</option>
+            <option value="ready">Finding and limitations present</option>
+            <option value="draft">Needs more detail</option>
+          </select>
+        </label>
+        <p>
+          {matched.length} matching entries · {saved.body.entries.length}/30
+          storage slots. Export before removing older findings.
+        </p>
+        <div className="action-row">
+          <Button
+            disabled={!currentPage}
+            onClick={() => setPage(currentPage - 1)}
+          >
+            Previous entries
+          </Button>
+          <span>
+            Page {currentPage + 1} /{" "}
+            {Math.max(1, Math.ceil(matched.length / 5))}
+          </span>
+          <Button
+            disabled={(currentPage + 1) * 5 >= matched.length}
+            onClick={() => setPage(currentPage + 1)}
+          >
+            Next entries
+          </Button>
+        </div>
+      </section>
       {!saved.body.entries.length && (
         <section className="panel empty-state">
           <h2>No findings yet</h2>
@@ -86,9 +152,15 @@ export function Notebook() {
           </p>
         </section>
       )}
-      {saved.body.entries.map((e) => (
+      {matched.slice(currentPage * 5, currentPage * 5 + 5).map((e) => (
         <article className="panel lesson-body" key={e.id}>
           <h2>{e.hypothesis || "Delivery investigation"}</h2>
+          {(e.finding.length < 30 || e.limitations.length < 20) && (
+            <p>
+              Draft: add a finding of 30 characters and limitations of 20
+              characters before treating this as a complete record.
+            </p>
+          )}
           <p className="small muted">
             {new Date(e.createdAt).toLocaleString()} · {e.dataset} v{e.version}{" "}
             · seed {e.seed}
@@ -151,6 +223,11 @@ export function Notebook() {
             <summary>Reproducible experiment and code</summary>
             <pre>{JSON.stringify(e.config, null, 2)}</pre>
             <pre>{e.code}</pre>
+            <p>
+              Mission: {e.mission ?? "delivery-delay"} · Chart: weather group
+              means in minutes, excluding missing durations. Reopen to recompute
+              from the stored recipe.
+            </p>
           </details>
           <div className="action-row">
             <Button disabled={saved.blocked} onClick={() => void reopen(e)}>
@@ -162,7 +239,7 @@ export function Notebook() {
               onClick={() => {
                 if (
                   window.confirm(
-                    "Remove this finding from the notebook? Save the notebook to confirm removal.",
+                    "Remove this finding from the notebook? This change will autosave.",
                   )
                 )
                   saved.update({

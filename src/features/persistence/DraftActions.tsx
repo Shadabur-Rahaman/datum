@@ -1,7 +1,9 @@
 import { Button } from "../../components/ui/button";
 export function DraftActions({
   draft,
+  saveLabel = "Save draft",
 }: {
+  saveLabel?: string;
   draft: {
     blocked: boolean;
     loading: boolean;
@@ -18,11 +20,14 @@ export function DraftActions({
     <div className="draft-actions">
       <p className="small muted">
         {draft.cloud ? "Account draft" : "Device-only guest draft"} · Not
-        graded. Save before leaving this page.
+        graded. Autosaves after a short pause; Save draft syncs immediately.
       </p>
       <div className="action-row">
-        <Button onClick={() => void draft.save()} disabled={draft.blocked}>
-          {draft.saving ? "Saving…" : "Save draft"}
+        <Button
+          onClick={() => void draft.save()}
+          disabled={draft.blocked || draft.saving}
+        >
+          {draft.saving ? "Saving…" : saveLabel}
         </Button>
         <Button
           variant="outline"
@@ -40,7 +45,9 @@ export function DraftActions({
             ? "Loading saved work…"
             : draft.dirty
               ? "Unsaved changes"
-              : draft.message}
+              : saveLabel === "Save draft"
+                ? draft.message
+                : `${saveLabel}: ${draft.message}`}
         </p>
       )}
     </div>

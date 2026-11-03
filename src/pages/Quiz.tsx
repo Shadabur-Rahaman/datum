@@ -1,3 +1,4 @@
+import { ChapterQuiz } from "../features/quiz/ChapterQuiz";
 import { useEffect, useMemo, useState } from "react";
 import { questions } from "../features/quiz/questions";
 import { PageHeading, Badge } from "../components/ui/shared";
@@ -72,8 +73,10 @@ export function Quiz() {
       <PageHeading
         eyebrow="QUIZ ARENA / DATA DETECTIVE"
         title="Quiz Arena"
-        description="Twelve objectives. Stable answer identities. Server-graded feedback."
+        description="Practice by chapter, review mistakes and build verified assessment evidence."
       />
+      <ChapterQuiz />
+      <h2>Original Data Detective assessment</h2>
       {(!supabase || !user) && (
         <p className="preview-note">
           You can answer and save a guest session. Verified grading requires a

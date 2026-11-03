@@ -1,6 +1,6 @@
 {
   "name": "datum",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "DATUM interactive data science investigations and evidence workspace",
   "scripts": {
     "test": "vitest run",

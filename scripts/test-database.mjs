@@ -137,7 +137,7 @@ try {
   await check("idempotent seed and anonymous published content", async () =>
     assert.equal(
       (await anon.query("select * from public.content_items")).rowCount,
-      14,
+      20,
     ),
   );
   await admin.query(
@@ -587,6 +587,197 @@ try {
         ).rows[0].ok,
         false,
       );
+    },
+  );
+  await check(
+    "all 36 chapter keys grade correctly and remain private",
+    async () => {
+      const keys = JSON.parse(
+        readFileSync("scripts/assessment-v22-fixtures.json", "utf8"),
+      );
+      assert.equal(keys.length, 36);
+      for (let chapter = 1; chapter <= 6; chapter++) {
+        const answers = Object.fromEntries(
+          keys
+            .slice((chapter - 1) * 6, chapter * 6)
+            .map((q) => [q.id, q.answer]),
+        );
+        const request = (await admin.query("select gen_random_uuid() as id"))
+          .rows[0].id;
+        const args = [`chapter-${chapter}-v22`, request, answers, A];
+        const result = (
+          await a.query(
+            "select * from public.grade_chapter_quiz($1,$2,$3,$4)",
+            args,
+          )
+        ).rows[0];
+        assert.equal(Number(result.verified_score), 1);
+        assert.equal(result.feedback.length, 6);
+        assert.equal(
+          (
+            await a.query(
+              "select * from public.grade_chapter_quiz($1,$2,$3,$4)",
+              args,
+            )
+          ).rows[0].id,
+          result.id,
+        );
+        await denied(
+          b.query("select * from public.grade_chapter_quiz($1,$2,$3,$4)", args),
+        );
+        assert.equal(
+          (
+            await b.query("select * from public.quiz_attempts where id=$1", [
+              result.id,
+            ])
+          ).rowCount,
+          0,
+        );
+        await denied(
+          a.query("select * from private.assessment_keys where content_id=$1", [
+            args[0],
+          ]),
+        );
+      }
+    },
+  );
+  await check(
+    "chapter grading rejects unknown assessments and incomplete responses",
+    async () => {
+      await denied(
+        a.query(
+          "select public.grade_chapter_quiz('unknown',gen_random_uuid(),'{}',$1)",
+          [A],
+        ),
+        "22023",
+      );
+      await denied(
+        a.query(
+          "select public.grade_chapter_quiz('chapter-1-v22',gen_random_uuid(),'{}',$1)",
+          [A],
+        ),
+        "22023",
+      );
+      await denied(
+        anon.query(
+          "select public.grade_chapter_quiz('chapter-1-v22',gen_random_uuid(),'{}',$1)",
+          [A],
+        ),
+      );
+    },
+  );
+  await check(
+    "new lesson documents import idempotently with owner isolation",
+    async () => {
+      const body = {
+        parameter: 4,
+        prediction: "",
+        ran: false,
+        answer: "",
+        applied: "",
+        explanation: "",
+        hints: 0,
+        attempts: [],
+      };
+      const docs = [
+        {
+          content_id: "lesson-activity-observations",
+          content_version: 1,
+          body,
+        },
+      ];
+      await a.query("select public.import_guest_drafts($1,$2)", [
+        JSON.stringify(docs),
+        A,
+      ]);
+      await a.query("select public.import_guest_drafts($1,$2)", [
+        JSON.stringify(docs),
+        A,
+      ]);
+      assert.equal(
+        (
+          await a.query(
+            "select * from public.learning_documents where content_id='lesson-activity-observations'",
+          )
+        ).rowCount,
+        1,
+      );
+      assert.equal(
+        (
+          await b.query(
+            "select * from public.learning_documents where content_id='lesson-activity-observations'",
+          )
+        ).rowCount,
+        0,
+      );
+    },
+  );
+  await check(
+    "guest notebook merge keeps cloud versions and deduplicates repeated imports",
+    async () => {
+      const ids = [
+        "00000000-0000-4000-8000-000000000011",
+        "00000000-0000-4000-8000-000000000012",
+      ];
+      const old = (
+        await a.query(
+          "select * from public.learning_documents where content_id='evidence-notebook'",
+        )
+      ).rows[0];
+      const cloud = {
+        entries: [
+          {
+            id: ids[0],
+            createdAt: "2026-11-03T00:00:00Z",
+            finding: "Cloud wins",
+          },
+        ],
+      };
+      await a.query(
+        "select public.save_learning_document('evidence-notebook',1,$1,$2,$3)",
+        [cloud, old?.revision ?? 0, A],
+      );
+      const docs = [
+        {
+          content_id: "evidence-notebook",
+          content_version: 1,
+          body: {
+            entries: [
+              { ...cloud.entries[0], finding: "Guest conflict" },
+              {
+                id: ids[1],
+                createdAt: "2026-11-03T01:00:00Z",
+                finding: "New guest entry",
+              },
+            ],
+          },
+        },
+      ];
+      for (let i = 0; i < 2; i++)
+        await a.query("select public.import_guest_drafts($1,$2)", [
+          JSON.stringify(docs),
+          A,
+        ]);
+      const book = (
+        await a.query(
+          "select body from public.learning_documents where content_id='evidence-notebook'",
+        )
+      ).rows[0].body;
+      assert.equal(book.entries.length, 2);
+      assert.equal(
+        book.entries.find((e) => e.id === ids[0]).finding,
+        "Cloud wins",
+      );
+    },
+  );
+  await check(
+    "AI usage is owner-only and excludes another user's requests",
+    async () => {
+      await denied(anon.query("select public.my_mentor_usage()"));
+      const bUsage = (await b.query("select public.my_mentor_usage() as usage"))
+        .rows[0].usage;
+      assert.equal(bUsage.today, 0);
+      assert.equal(bUsage.dailyLimit, 20);
     },
   );
   await check("auth deletion cascades owned records", async () => {

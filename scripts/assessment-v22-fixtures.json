@@ -1,0 +1,408 @@
+[
+  {
+    "id": "c1q1",
+    "kind": "single",
+    "skill": "Data literacy",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "A row records a visit; hospitals may recur and columns are variables."
+  },
+  {
+    "id": "c1q2",
+    "kind": "multi",
+    "skill": "Data literacy",
+    "answer": [
+      "o0",
+      "o1"
+    ],
+    "options": [
+      "o0",
+      "o1",
+      "o2",
+      "o3"
+    ],
+    "explanation": "Payment method and region name categories. Price and weight measure amounts."
+  },
+  {
+    "id": "c1q3",
+    "kind": "boolean",
+    "skill": "Data literacy",
+    "answer": "o1",
+    "options": [
+      "o0",
+      "o1"
+    ],
+    "explanation": "Other variables can explain an association; an experiment or defensible causal design is needed."
+  },
+  {
+    "id": "c1q4",
+    "kind": "numeric",
+    "skill": "Data literacy",
+    "answer": 32,
+    "options": [],
+    "explanation": "Multiply 8 observations by 4 fields: 32 cells."
+  },
+  {
+    "id": "c1q5",
+    "kind": "scenario",
+    "skill": "Data literacy",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "Random assignment reduces confounding. Happy customers are selected; designer opinion is not outcome evidence."
+  },
+  {
+    "id": "c1q6",
+    "kind": "single",
+    "skill": "Data literacy",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "Mean duration can be measured and compared; the alternatives are subjective or undefined."
+  },
+  {
+    "id": "c2q1",
+    "kind": "output",
+    "skill": "Python foundations",
+    "answer": "o1",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "Python indexes from zero: index 1 selects the second value, 8."
+  },
+  {
+    "id": "c2q2",
+    "kind": "numeric",
+    "skill": "Python foundations",
+    "answer": 5,
+    "options": [],
+    "explanation": "len counts five list elements, not their sum or last value."
+  },
+  {
+    "id": "c2q3",
+    "kind": "output",
+    "skill": "Python foundations",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "Multiplication occurs before addition: 12 + 2 = 14."
+  },
+  {
+    "id": "c2q4",
+    "kind": "boolean",
+    "skill": "Python foundations",
+    "answer": "o1",
+    "options": [
+      "o0",
+      "o1"
+    ],
+    "explanation": "A single equals sign assigns. Two equals signs compare."
+  },
+  {
+    "id": "c2q5",
+    "kind": "multi",
+    "skill": "Python foundations",
+    "answer": [
+      "o0",
+      "o1"
+    ],
+    "options": [
+      "o0",
+      "o1",
+      "o2",
+      "o3"
+    ],
+    "explanation": "Three exceeds two and two equals two. The other comparisons are false."
+  },
+  {
+    "id": "c2q6",
+    "kind": "scenario",
+    "skill": "Python foundations",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "A loop must reach a stopping condition. Visual styles cannot change that logic."
+  },
+  {
+    "id": "c3q1",
+    "kind": "numeric",
+    "skill": "Data cleaning",
+    "answer": 18,
+    "options": [],
+    "explanation": "The observed total is 36 across two observations: 18. Missing is not zero."
+  },
+  {
+    "id": "c3q2",
+    "kind": "single",
+    "skill": "Data cleaning",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "Each column is a variable measured across rows. A person may correspond to a row."
+  },
+  {
+    "id": "c3q3",
+    "kind": "scenario",
+    "skill": "Data cleaning",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "Repeated IDs can mean updates. Blind deletion or replacement can corrupt evidence."
+  },
+  {
+    "id": "c3q4",
+    "kind": "boolean",
+    "skill": "Data cleaning",
+    "answer": "o1",
+    "options": [
+      "o0",
+      "o1"
+    ],
+    "explanation": "Zero is a real amount and changes the distribution; unknown is not measured zero."
+  },
+  {
+    "id": "c3q5",
+    "kind": "numeric",
+    "skill": "Data cleaning",
+    "answer": 2,
+    "options": [],
+    "explanation": "15 and 20 satisfy the strict comparison; 10 does not."
+  },
+  {
+    "id": "c3q6",
+    "kind": "multi",
+    "skill": "Data cleaning",
+    "answer": [
+      "o0",
+      "o1"
+    ],
+    "options": [
+      "o0",
+      "o1",
+      "o2",
+      "o3"
+    ],
+    "explanation": "Removal and imputation affect results and reproducibility; colors do not document those transformations."
+  },
+  {
+    "id": "c4q1",
+    "kind": "chart",
+    "skill": "Visual reasoning",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "The difference is 30 - 20 = 10. The ratio is 1.5, not 3."
+  },
+  {
+    "id": "c4q2",
+    "kind": "numeric",
+    "skill": "Visual reasoning",
+    "answer": 15,
+    "options": [],
+    "explanation": "Non-overlapping histogram bin counts sum to 3 + 5 + 7 = 15."
+  },
+  {
+    "id": "c4q3",
+    "kind": "single",
+    "skill": "Visual reasoning",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "A histogram groups numeric observations into bins. Labels and meaningful encodings are essential."
+  },
+  {
+    "id": "c4q4",
+    "kind": "boolean",
+    "skill": "Visual reasoning",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1"
+    ],
+    "explanation": "Bar length encodes magnitude; a truncated baseline can inflate the apparent ratio."
+  },
+  {
+    "id": "c4q5",
+    "kind": "scenario",
+    "skill": "Visual reasoning",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "Counts expose limited evidence; two records cannot guarantee representativeness."
+  },
+  {
+    "id": "c4q6",
+    "kind": "multi",
+    "skill": "Visual reasoning",
+    "answer": [
+      "o0",
+      "o1"
+    ],
+    "options": [
+      "o0",
+      "o1",
+      "o2",
+      "o3"
+    ],
+    "explanation": "Units and group definitions explain encoding. Hidden exclusions and unlabeled scale changes obscure meaning."
+  },
+  {
+    "id": "c5q1",
+    "kind": "numeric",
+    "skill": "Statistical reasoning",
+    "answer": 16,
+    "options": [],
+    "explanation": "The sum is 48; divide by 3 to get 16."
+  },
+  {
+    "id": "c5q2",
+    "kind": "numeric",
+    "skill": "Statistical reasoning",
+    "answer": 9,
+    "options": [],
+    "explanation": "Average the middle pair: (7 + 11) / 2 = 9."
+  },
+  {
+    "id": "c5q3",
+    "kind": "single",
+    "skill": "Statistical reasoning",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "The sum and mean rise. Count and minimum remain unchanged."
+  },
+  {
+    "id": "c5q4",
+    "kind": "boolean",
+    "skill": "Statistical reasoning",
+    "answer": "o1",
+    "options": [
+      "o0",
+      "o1"
+    ],
+    "explanation": "More biased observations improve precision about the wrong source, not representativeness."
+  },
+  {
+    "id": "c5q5",
+    "kind": "numeric",
+    "skill": "Statistical reasoning",
+    "answer": 12,
+    "options": [],
+    "explanation": "Range is maximum minus minimum: 16 - 4 = 12."
+  },
+  {
+    "id": "c5q6",
+    "kind": "scenario",
+    "skill": "Statistical reasoning",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "Variation can arise from chance or selection. Preference is not evidence of accuracy."
+  },
+  {
+    "id": "c6q1",
+    "kind": "single",
+    "skill": "Evaluation",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "Final duration is the target observed after delivery; it is unavailable for genuine advance prediction."
+  },
+  {
+    "id": "c6q2",
+    "kind": "numeric",
+    "skill": "Evaluation",
+    "answer": 3,
+    "options": [],
+    "explanation": "Absolute errors are 2 and 4, so MAE is 3."
+  },
+  {
+    "id": "c6q3",
+    "kind": "boolean",
+    "skill": "Evaluation",
+    "answer": "o1",
+    "options": [
+      "o0",
+      "o1"
+    ],
+    "explanation": "Tuning uses test information. Keep a fresh held-out evaluation or use a separate validation split."
+  },
+  {
+    "id": "c6q4",
+    "kind": "scenario",
+    "skill": "Evaluation",
+    "answer": "o0",
+    "options": [
+      "o0",
+      "o1",
+      "o2"
+    ],
+    "explanation": "Fit transformations on training data and apply them to held-out data without refitting."
+  },
+  {
+    "id": "c6q5",
+    "kind": "multi",
+    "skill": "Evaluation",
+    "answer": [
+      "o0",
+      "o1"
+    ],
+    "options": [
+      "o0",
+      "o1",
+      "o2",
+      "o3"
+    ],
+    "explanation": "Metric meaning and held-out sample definition make evaluation interpretable; guarantees are unsupported."
+  },
+  {
+    "id": "c6q6",
+    "kind": "numeric",
+    "skill": "Evaluation",
+    "answer": 3,
+    "options": [],
+    "explanation": "The error falls by 8 - 5 = 3 units. This is an absolute reduction, not a percentage."
+  }
+]

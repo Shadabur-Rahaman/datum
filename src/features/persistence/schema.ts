@@ -1,3 +1,8 @@
+import { conversationSchema } from "../mentor/schema";
+import { researchSchema } from "../lab/research";
+import { chapterSessionSchema } from "../quiz/session";
+import { activities } from "../lessons/activities";
+import { activitySchema } from "../lessons/schema";
 import { z } from "zod";
 import { lessons } from "../../content/track";
 import { labSchema } from "../lab/engine";
@@ -21,6 +26,10 @@ export const missionBody = z
 export type LessonBody = z.infer<typeof lessonBody>;
 export type MissionBody = z.infer<typeof missionBody>;
 export type DraftBody =
+  | z.infer<typeof activitySchema>
+  | z.infer<typeof chapterSessionSchema>
+  | z.infer<typeof researchSchema>
+  | z.infer<typeof conversationSchema>
   | LessonBody
   | MissionBody
   | z.infer<typeof labSchema>
@@ -32,6 +41,10 @@ export const draftSchema = z.object({
   content_id: z.string().max(80),
   content_version: z.literal(1),
   body: z.union([
+    activitySchema,
+    chapterSessionSchema,
+    researchSchema,
+    conversationSchema,
     lessonBody,
     missionBody,
     labSchema,
@@ -45,6 +58,26 @@ export const draftSchema = z.object({
 });
 export type Draft = z.infer<typeof draftSchema>;
 export function validateBody(id: string, body: unknown): DraftBody {
+  if (
+    id.startsWith("lesson-activity-") &&
+    lessons.some((l) => id === "lesson-activity-" + l.id)
+  ) {
+    const parsed = activitySchema.parse(body);
+    const spec = activities[id.slice("lesson-activity-".length)];
+    if (parsed.parameter < spec.min || parsed.parameter > spec.max)
+      throw new Error("Lesson parameter is out of range.");
+    return parsed;
+  }
+  if (id === "quiz-chapters-v22") return chapterSessionSchema.parse(body);
+  if (id === "lab-research-v22") return researchSchema.parse(body);
+  if (
+    [
+      "mentor-conversation-v22",
+      "mentor-debugger-v22",
+      "mentor-navigator-v22",
+    ].includes(id)
+  )
+    return conversationSchema.parse(body);
   if (id === "lab-delivery") return labSchema.parse(body);
   if (id === "evidence-notebook") return notebookSchema.parse(body);
   if (id === "quiz-delivery") return quizSessionSchema.parse(body);

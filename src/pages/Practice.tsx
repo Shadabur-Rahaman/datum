@@ -8,7 +8,18 @@ import { practiceSchema } from "../features/journey/schema";
 import type { z } from "zod";
 const PythonPanel = lazy(() => import("../features/python/PythonPanel"));
 export function Practice() {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() =>
+    Math.max(
+      0,
+      challenges.findIndex(
+        (c) =>
+          c.id ===
+          new URLSearchParams(
+            window.location.hash.split("?")[1] ?? window.location.search,
+          ).get("challenge"),
+      ),
+    ),
+  );
   return (
     <>
       <PageHeading

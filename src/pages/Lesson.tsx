@@ -1,3 +1,4 @@
+import { InteractiveLesson } from "../features/lessons/InteractiveLesson";
 import { LessonExperiment } from "../features/journey/LessonExperiment";
 import { useLastLesson } from "../features/journey/useLastLesson";
 import { useState } from "react";
@@ -33,7 +34,7 @@ export function Lesson() {
         Data Detective track
       </Link>
       <PageHeading
-        eyebrow={`CHAPTER 0${lesson.chapter} / ${lesson.id === "hypotheses" ? "INTERACTIVE LESSON" : "LESSON PREVIEW"}`}
+        eyebrow={`CHAPTER 0${lesson.chapter} / INTERACTIVE LESSON`}
         title={lesson.title}
         description={lesson.chapterTitle}
       >
@@ -48,6 +49,7 @@ export function Lesson() {
           <h2>{lesson.question}</h2>
           <p className="large-copy">{lesson.concept}</p>
           {lesson.id === "hypotheses" && <LessonExperiment />}
+          <InteractiveLesson id={lesson.id} />
           <hr />
           <p className="eyebrow">02 / MAKE A PREDICTION</p>
           <label htmlFor="reflection">{lesson.prompt}</label>
@@ -85,7 +87,7 @@ export function Lesson() {
             {next ? (
               <Button asChild>
                 <Link to={`/learn/${next.id}`}>
-                  Next lesson preview <ArrowRight size={16} />
+                  Next lesson <ArrowRight size={16} />
                 </Link>
               </Button>
             ) : (
@@ -114,8 +116,8 @@ export function Lesson() {
             </div>
           ))}
           <p className="small muted">
-            Full lesson interactions and completion checks will be introduced
-            with the learning engines. Reading a page does not count as mastery.
+            Complete the experiment and applied checks, then explain the result.
+            Practice evidence is separate from verified quiz mastery.
           </p>
         </aside>
       </div>

@@ -1,3 +1,4 @@
+import { Recommendation } from "../features/journey/Recommendation";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -50,10 +51,13 @@ export function Dashboard() {
       >
         <Badge tone="amber">YOUR WORKSPACE</Badge>
       </PageHeading>
+      {!loading && !error && (
+        <Recommendation drafts={drafts} quizzes={quizzes} />
+      )}
       <div className="demo-note">
         <span className="status-dot" />
-        Illustrative learner data · Explore the interface. Progress and activity
-        below are examples, not your results.
+        Saved learning evidence · Your reflections, practice checks and findings
+        appear here after saving. Verified quiz results require a cloud account.
       </div>
       <div className="dashboard-grid">
         <section className="hero panel">
@@ -78,7 +82,7 @@ export function Dashboard() {
               </span>
               <span>
                 <BookOpen size={14} />
-                Guided lesson preview
+                Interactive lesson
               </span>
             </div>
             <Button asChild>
@@ -226,7 +230,7 @@ export function Dashboard() {
       </div>
       <footer className="page-footer">
         Understanding is built, one experiment at a time.
-        <span>DATUM / V0.1 · FOUNDATION</span>
+        <span>DATUM / V2.2 · LEARNING ENGINE</span>
       </footer>
     </>
   );

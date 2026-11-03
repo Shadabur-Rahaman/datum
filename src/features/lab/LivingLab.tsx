@@ -1,3 +1,4 @@
+import { researchRubric, type Research } from "./research";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Badge, PageHeading } from "../../components/ui/shared";
@@ -29,6 +30,11 @@ export function LivingLab() {
   const saved = useDraft<LabState>("lab-delivery", initialLab),
     s = saved.body;
   const { user } = useAuth();
+  const research = useDraft<Research>("lab-research-v22", {
+    history: [],
+    snapshots: [],
+    pythonView: "analysis",
+  });
   const [panel, setPanel] = useState("Data"),
     [mobile, setMobile] = useState("Workspace"),
     [search, setSearch] = useState(""),
@@ -51,6 +57,12 @@ export function LivingLab() {
         : (a[sort] ?? Infinity) - (b[sort] ?? Infinity),
     );
   function configure(patch: Partial<Config>) {
+    research.update({
+      history: [
+        ...research.body.history,
+        { at: new Date().toISOString(), config: s.config },
+      ].slice(-30),
+    });
     saved.update({
       config: { ...s.config, ...patch },
       executed: false,
@@ -98,6 +110,13 @@ export function LivingLab() {
         finding: s.explanation,
         limitations: s.limitations,
         reflection: s.reflection,
+        mission: "delivery-delay",
+        chart: {
+          kind: "weather-mean",
+          measure: "duration",
+          unit: "minutes",
+          excludeMissing: true,
+        },
       };
       if (book.entries.length >= 30)
         throw new Error(
@@ -137,6 +156,128 @@ export function LivingLab() {
           Open earlier saved workspace
         </Link>
       </p>
+      <details className="panel lesson-body">
+        <summary>Dataset dictionary and research history</summary>
+        <p>
+          Version 1 · 1,000 synthetic deliveries · seed 20261103. ID identifies
+          the delivery; distance is in km; weather is a category; rush is a
+          yes/no flag; preparation and duration are minutes; missing durations
+          are unknown; complaint is a yes/no outcome.
+        </p>
+        <p>
+          Original: {stats(original).observed} observed durations,{" "}
+          {stats(original).missing} missing. Active analysis: {summary.observed}{" "}
+          observed, {summary.missing} missing. The chart, metrics and analysis
+          Python view use the same executed configuration.
+        </p>
+        <label>
+          Investigation template
+          <select
+            defaultValue=""
+            disabled={saved.blocked || research.blocked}
+            onChange={(e) => {
+              if (e.target.value === "rain")
+                configure({ ...defaultConfig, weather: "Rain" });
+              if (e.target.value === "missing")
+                configure({ ...defaultConfig, missing: "drop" });
+              if (e.target.value === "outlier")
+                configure({ ...defaultConfig, outlierCap: 90 });
+            }}
+          >
+            <option value="">Choose a starting question</option>
+            <option value="rain">Rainy deliveries</option>
+            <option value="missing">Exclude unknown durations</option>
+            <option value="outlier">Remove durations above 90 minutes</option>
+          </select>
+        </label>
+        <div className="action-row">
+          <Button
+            disabled={
+              saved.blocked || research.blocked || !research.body.history.length
+            }
+            onClick={() => {
+              const previous = research.body.history.at(-1)!;
+              saved.update({
+                config: previous.config,
+                executed: false,
+                prediction: "",
+                stage: "EXPERIMENT",
+              });
+              research.update({ history: research.body.history.slice(0, -1) });
+              setMessage(
+                "Previous configuration restored. Predict and run again to apply it.",
+              );
+            }}
+          >
+            Undo configuration change
+          </Button>
+          <Button
+            disabled={
+              research.blocked ||
+              research.body.snapshots.length >= 10 ||
+              !s.executed
+            }
+            onClick={() =>
+              research.update({
+                snapshots: [
+                  ...research.body.snapshots,
+                  {
+                    id: crypto.randomUUID(),
+                    at: new Date().toISOString(),
+                    name: `Experiment ${research.body.snapshots.length + 1}`,
+                    config: s.config,
+                  },
+                ],
+              })
+            }
+          >
+            Save experiment snapshot
+          </Button>
+        </div>
+        <p>
+          Snapshots store transformation recipes, not duplicate datasets. Up to
+          10 snapshots and 30 configuration changes are retained.
+        </p>
+        {research.body.snapshots.map((snapshot) => (
+          <div key={snapshot.id}>
+            <p>
+              {snapshot.name} · {new Date(snapshot.at).toLocaleString()}
+            </p>
+            <Button
+              disabled={saved.blocked || research.blocked}
+              onClick={() => configure(snapshot.config)}
+            >
+              Restore {snapshot.name}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={research.blocked}
+              onClick={() =>
+                research.update({
+                  snapshots: research.body.snapshots.filter(
+                    (x) => x.id !== snapshot.id,
+                  ),
+                })
+              }
+            >
+              Remove {snapshot.name}
+            </Button>
+          </div>
+        ))}
+        <ol>
+          {research.body.history
+            .slice()
+            .reverse()
+            .map((entry, i) => (
+              <li key={entry.at + String(i)}>
+                {new Date(entry.at).toLocaleString()} · {entry.config.weather},
+                missing: {entry.config.missing}, cap: {entry.config.outlierCap},
+                sample: {entry.config.sampleSize}
+              </li>
+            ))}
+        </ol>
+        <DraftActions draft={research} saveLabel="Save research history" />
+      </details>
       <div
         className="stage-strip"
         role="region"
@@ -516,17 +657,59 @@ export function LivingLab() {
               </>
             ) : null}
             {panel === "Python" ? (
-              <Suspense fallback={<p>Loading Python workspace…</p>}>
-                <PythonPanel
-                  starter={initialLab.code}
-                  code={s.code}
-                  onChange={(code) => saved.update({ code })}
-                  rows={rows}
-                />
-              </Suspense>
+              <>
+                <label>
+                  Python dataset view
+                  <select
+                    value={research.body.pythonView}
+                    onChange={(e) =>
+                      research.update({
+                        pythonView: e.target.value as Research["pythonView"],
+                      })
+                    }
+                  >
+                    <option value="analysis">
+                      Executed analysis (same as chart)
+                    </option>
+                    <option value="original">
+                      Original 1,000 records (comparison)
+                    </option>
+                  </select>
+                </label>
+                <p>
+                  delivery-synthetic v1 · seed 20261103 ·{" "}
+                  {research.body.pythonView === "analysis"
+                    ? rows.length
+                    : original.length}{" "}
+                  rows. Run again after changing views; earlier output belongs
+                  to its earlier run.
+                </p>
+                <Suspense fallback={<p>Loading Python workspace…</p>}>
+                  <PythonPanel
+                    starter={initialLab.code}
+                    code={s.code}
+                    onChange={(code) => saved.update({ code })}
+                    rows={
+                      research.body.pythonView === "analysis" ? rows : original
+                    }
+                  />
+                </Suspense>
+              </>
             ) : null}
             {panel === "Explain" ? (
               <>
+                <h3>Evidence checklist</h3>
+                <p>
+                  These checks verify recorded structure and computable
+                  observations, not the truth of your conclusion.
+                </p>
+                <ul>
+                  {researchRubric(s).map((item) => (
+                    <li key={item.label}>
+                      {item.passed ? "Ready" : "Needed"}: {item.label}
+                    </li>
+                  ))}
+                </ul>
                 <label>
                   Finding tied to the measurements
                   <textarea
@@ -578,6 +761,9 @@ export function LivingLab() {
               context={{
                 hypothesis: s.hypothesis,
                 summary,
+                dataset: DATASET,
+                configuration: active,
+                originalSummary: stats(original),
                 explanation: s.explanation,
                 limitations: s.limitations,
               }}

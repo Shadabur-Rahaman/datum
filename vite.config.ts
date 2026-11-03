@@ -27,7 +27,7 @@ export default defineConfig({
                 encoding: "utf8",
               }).trim(),
             builtAt: new Date().toISOString(),
-            version: "0.2.2",
+            version: "0.3.0",
           }),
         });
       },

@@ -1,42 +1,70 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
-import { loadDraft, persistDraft } from "./repository";
-import { DraftConflict } from "./guest";
+import { loadDraft } from "./repository";
 import type { DraftBody } from "./schema";
-// Session-only recovery survives route unmounts without copying private cloud work
-// into guest/browser storage. Explicit saves remain the durability boundary.
-import { recovery } from "./recovery";
-
+import { validateBody } from "./schema";
+import {
+  recovery,
+  readRecovery,
+  writeRecovery,
+  removeRecovery,
+} from "./recovery";
+import { flushSave, scheduleSave, saveEvent } from "./autosave";
 export function useDraft<T extends DraftBody>(id: string, initial: T) {
-  const { user, loading: authLoading, error: authError } = useAuth();
-  const owner = user?.id ?? null;
-  const recoveryKey = `${owner ?? "guest"}:${id}`;
-  const [body, setBody] = useState<T>(initial);
-  const [revision, setRevision] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [reload, setReload] = useState(0);
-  const epoch = useRef(0);
-  const identity = useRef(owner);
-  identity.current = owner;
+  const { user, loading: authLoading, error: authError } = useAuth(),
+    owner = user?.id ?? null,
+    key = `${owner ?? "guest"}:${id}`;
+  const [body, setBody] = useState(initial),
+    [revision, setRevision] = useState(0),
+    [loading, setLoading] = useState(true),
+    [saving, setSaving] = useState(false),
+    [dirty, setDirty] = useState(false),
+    [message, setMessage] = useState(""),
+    [error, setError] = useState(""),
+    [reload, setReload] = useState(0);
+  const latest = useRef({ body, revision });
+  latest.current = { body, revision };
   const initialRef = useRef(initial);
   useEffect(() => {
-    const current = ++epoch.current;
+    let active = true;
+    setLoading(true);
+    setError("");
+    setMessage("");
+    setDirty(false);
     setBody(initialRef.current);
     setRevision(0);
-    setDirty(false);
-    setMessage("");
-    setError("");
-    setLoading(true);
-    setSaving(false);
     if (authLoading || authError) return;
-    loadDraft(owner, id)
+    let pending: ReturnType<typeof readRecovery>;
+    try {
+      pending = readRecovery(key);
+      if (pending) validateBody(id, pending.body);
+    } catch {
+      setError(
+        "Recovery could not be read. Existing data has not been replaced.",
+      );
+      setLoading(false);
+      return;
+    }
+    if (pending) {
+      setBody(pending.body as T);
+      setRevision(pending.revision);
+      setDirty(true);
+    }
+    void loadDraft(owner, id)
       .then((saved) => {
-        if (current !== epoch.current) return;
-        if (saved) {
+        if (!active) return;
+        if (pending) {
+          setMessage("Recovered pending edits from this device.");
+          if (
+            saved &&
+            saved.revision !== pending.revision &&
+            JSON.stringify(saved.body) !== JSON.stringify(pending.body)
+          )
+            setError(
+              "This draft changed elsewhere. Copy your edits if needed, then reload the saved draft.",
+            );
+          else scheduleSave(owner, id);
+        } else if (saved) {
           setBody(saved.body as T);
           setRevision(saved.revision);
           setMessage(
@@ -45,29 +73,48 @@ export function useDraft<T extends DraftBody>(id: string, initial: T) {
               : "Restored from this device.",
           );
         }
-        const pending = recovery.get(recoveryKey);
-        if (pending) {
-          setBody(pending.body as T);
-          setRevision(pending.revision);
-          setDirty(true);
-          setMessage(
-            "Restored unsaved edits from this session. Save to keep them after closing.",
-          );
-        }
         setLoading(false);
       })
       .catch(() => {
-        if (current === epoch.current) {
-          setLoading(false);
-          setError(
-            "Could not load your saved draft. Retry loading before editing; existing data has not been replaced.",
-          );
-        }
+        if (!active) return;
+        setLoading(false);
+        setError(
+          pending
+            ? "Offline or sync failed. Recovered edits remain on this device."
+            : "Could not load your saved draft. Retry loading before editing; existing data has not been replaced.",
+        );
       });
     return () => {
-      epoch.current++;
+      active = false;
     };
   }, [owner, id, authLoading, authError, reload]);
+  useEffect(() => {
+    function changed(event: Event) {
+      const d = (event as CustomEvent).detail;
+      if (d.key !== key) return;
+      if (d.saving !== undefined) setSaving(d.saving);
+      if (d.error) {
+        setError("Save failed. " + d.error);
+        setMessage("");
+      }
+      if (d.saved) {
+        const pending = recovery.get(key);
+        setRevision(d.revision);
+        setDirty(!!pending);
+        setError("");
+        setMessage(owner ? "Saved to your account." : "Saved on this device.");
+      }
+    }
+    function online() {
+      if (recovery.has(key)) scheduleSave(owner, id);
+    }
+    window.addEventListener(saveEvent, changed);
+    window.addEventListener("online", online);
+    return () => {
+      window.removeEventListener(saveEvent, changed);
+      window.removeEventListener("online", online);
+    };
+  }, [key, owner, id]);
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -77,49 +124,34 @@ export function useDraft<T extends DraftBody>(id: string, initial: T) {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
-  async function save() {
-    if (loading || saving || authError) return;
-    const current = epoch.current;
-    const originalOwner = owner;
-    setSaving(true);
-    setError("");
-    setMessage("");
+  function update(patch: Partial<T>) {
+    if (loading || authLoading || authError) return;
+    const next = { ...latest.current.body, ...patch };
+    latest.current.body = next;
+    setBody(next);
+    setDirty(true);
+    setMessage("Saving shortly. Recovery is stored on this device.");
     try {
-      const saved = await persistDraft(owner, id, body, revision);
-      if (current !== epoch.current || identity.current !== originalOwner)
-        return;
-      setRevision(saved.revision);
-      recovery.delete(recoveryKey);
-      setDirty(false);
-      setMessage(owner ? "Saved to your account." : "Saved on this device.");
-      return true;
-    } catch (failure) {
-      if (current === epoch.current)
-        setError(
-          failure instanceof DraftConflict
-            ? failure.message
-            : "Save failed. Your edits are still here. Check your connection or browser storage and retry.",
-        );
-      return false;
-    } finally {
-      if (current === epoch.current) setSaving(false);
+      writeRecovery(key, { body: next, revision: latest.current.revision });
+      setError("");
+      scheduleSave(owner, id);
+    } catch {
+      setError(
+        "Browser recovery storage is unavailable. Keep this page open and retry Save draft.",
+      );
     }
+  }
+  async function save() {
+    if (loading || authLoading || authError) return false;
+    return flushSave(owner, id);
   }
   return {
     body,
-    update: (patch: Partial<T>) => {
-      if (loading || saving || authLoading || authError) return;
-      setBody((old) => {
-        const next = { ...old, ...patch };
-        recovery.set(recoveryKey, { body: next, revision });
-        return next;
-      });
-      setDirty(true);
-      setMessage("");
-    },
+    update,
     save,
     reload: () => {
-      recovery.delete(recoveryKey);
+      if (saving) return;
+      removeRecovery(key);
       setReload((n) => n + 1);
     },
     loading: loading || authLoading,
@@ -130,7 +162,6 @@ export function useDraft<T extends DraftBody>(id: string, initial: T) {
     blocked:
       loading ||
       authLoading ||
-      saving ||
       !!authError ||
       (!!error && revision === 0 && !dirty),
     cloud: !!owner,
