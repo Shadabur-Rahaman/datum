@@ -37,7 +37,7 @@ function run(name, args) {
   });
   if (r.status !== 0)
     throw new Error(
-      `${name}: ${r.stderr ?? "See PostgreSQL log in " + root}\n${r.stdout ?? ""}`,
+      `${name}: ${r.stderr ?? ""}\n${r.stdout ?? ""}\n${existsSync(join(root,'postgres.log')) ? readFileSync(join(root,'postgres.log'),'utf8') : 'No PostgreSQL log created'}`,
     );
 }
 const clients = [];
@@ -81,7 +81,7 @@ try {
     "-l",
     join(root, "postgres.log"),
     "-o",
-    `-h 127.0.0.1 -p ${port}`,
+    `-h 127.0.0.1 -p ${port}${windows ? '' : ` -k ${root}`}`,
     "-w",
     "start",
   ]);

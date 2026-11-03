@@ -39,3 +39,5 @@ Local implementation and guest/database verification are complete; hosted Milest
 Deployment: release is configured for the existing Pages site. Confirm actual workflow result and live guest smoke check before calling the publication successful; this report does not equate queued CI with deployed status.
 
 No Milestone 2.2+ feature has been implemented. Stop here pending instruction.
+
+CI portability follow-up: the first Linux release run stopped at PostgreSQL startup before deployment. The isolated harness now explicitly places its Unix socket in its own temporary directory and includes the server log in startup failures; Windows keeps its existing behavior. Release must pass this gate before publication.
